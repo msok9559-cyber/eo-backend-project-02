@@ -1,4 +1,4 @@
 package com.example.community.controller;
 
-public class UserCotroller {
+public class UserController {
 }
