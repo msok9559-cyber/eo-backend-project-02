@@ -18,7 +18,7 @@ import java.util.List;
 @ToString
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "post")
+@Table(name = "posts")
 public class PostEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -66,7 +66,7 @@ public class PostEntity {
     private Short fixed;
 
     @ToString.Exclude
-    @OneToMany(mappedBy = "postsEntity", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "postEntity", cascade = CascadeType.REMOVE)
     private List<CommentEntity> commentEntityList = new ArrayList<>();
 
     @Builder
