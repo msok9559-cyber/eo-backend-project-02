@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "comments")
-public class CommentsEntity {
+public class CommentEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -39,18 +39,18 @@ public class CommentsEntity {
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     @Builder
-    public CommentsEntity(PostEntity postEntity, String content, String writer) {
+    public CommentEntity(PostEntity postEntity, String content, String writer) {
         this.postEntity = postEntity;
         this.content = content;
         this.writer = writer;
     }
 
-    public CommentsEntity updateContent(String content) {
+    public CommentEntity updateContent(String content) {
         this.content = content;
         return this;
     }
 
-    public CommentsEntity updateWriter(String writer) {
+    public CommentEntity updateWriter(String writer) {
         this.writer = writer;
         return this;
     }

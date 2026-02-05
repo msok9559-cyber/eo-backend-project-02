@@ -25,7 +25,7 @@ public class CommentDto {
     private LocalDateTime updatedAt;
 
     // 정적 팩토리 메서드(static factory method)
-    public static CommentDto from(CommentsEntity commentEntity) {
+    public static CommentDto from(CommentEntity commentEntity) {
         return CommentDto.builder()
                 .id(commentEntity.getId())
                 .postId(commentEntity.getPostEntity().getId())
@@ -42,8 +42,8 @@ public class CommentDto {
      * @param postEntity CommentEntity 인스턴스가 참조하는 PostEntity 인스턴스
      * @return CommentEntity 인스턴스
      */
-    public CommentsEntity toEntity(PostEntity postEntity) {
-        return CommentsEntity.builder()
+    public CommentEntity toEntity(PostEntity postEntity) {
+        return CommentEntity.builder()
                 .postEntity(postEntity)
                 .content(content)
                 .writer(writer)
