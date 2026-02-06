@@ -12,4 +12,5 @@ class MessageRepositoryTest {
     @Autowired
     private MessageRepository messageRepository;
 
+    private MessageRepository getMessageRepository() {}
 }
