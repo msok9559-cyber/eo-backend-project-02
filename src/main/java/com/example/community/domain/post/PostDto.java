@@ -29,8 +29,8 @@ public class PostDto {
     private LocalDateTime updatedAt;
 
     private Integer viewCount;
-    private Integer commentCount;
-    private Integer likeCount;
+    private Integer commentsCount;
+    private Integer likesCount;
 
     // 게시글 타입 (공지/일반 등, nullable)
     private Short postType;
@@ -53,8 +53,8 @@ public class PostDto {
                 .createdAt(postEntity.getCreatedAt())
                 .updatedAt(postEntity.getUpdatedAt())
                 .viewCount(postEntity.getViewCount())
-                .commentCount(postEntity.getCommentCount())
-                .likeCount(postEntity.getLikeCount())
+                .commentsCount(postEntity.getCommentsCount())
+                .likesCount(postEntity.getLikesCount())
                 .postType(postEntity.getPostType())
                 .fixed(postEntity.getFixed())
                 .build();

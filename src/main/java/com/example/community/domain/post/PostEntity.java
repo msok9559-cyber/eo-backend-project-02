@@ -31,7 +31,7 @@ public class PostEntity {
     @Column(name = "board_id", nullable = false)
     private Long boardId;
 
-    @Column(name = "title", length = 100, nullable = false)
+    @Column(name = "post_title", length = 100, nullable = false)
     private String title;
 
     @Column(name = "content", columnDefinition = "TEXT", nullable = false)
@@ -51,11 +51,11 @@ public class PostEntity {
     @Column(name = "view_count", nullable = false)
     private Integer viewCount;
 
-    @Column(name = "comment_count", nullable = false)
-    private Integer commentCount;
+    @Column(name = "comments_count", nullable = false)
+    private Integer commentsCount;
 
-    @Column(name = "like_count", nullable = false)
-    private Integer likeCount;
+    @Column(name = "likes_count", nullable = false)
+    private Integer likesCount;
 
     // 게시글 타입 (공지/일반 등, nullable)
     @Column(name = "post_type")
@@ -71,15 +71,15 @@ public class PostEntity {
 
     @Builder
     public PostEntity(Long userId, Long boardId, String title, String content,
-                      Integer viewCount, Integer commentCount, Integer likeCount, Short postType, Short fixed) {
+                      Integer viewCount, Integer commentsCount, Integer likesCount, Short postType, Short fixed) {
         this.userId = userId;
         this.boardId = boardId;
         this.title = title;
         this.content = content;
 
         this.viewCount = (viewCount == null ? 0 : viewCount);
-        this.commentCount = (commentCount == null ? 0 : commentCount);
-        this.likeCount = (likeCount == null ? 0 : likeCount);
+        this.commentsCount = (commentsCount == null ? 0 : commentsCount);
+        this.likesCount = (likesCount == null ? 0 : likesCount);
 
         this.postType = postType;
         this.fixed = (fixed == null ? (short) 0 : fixed);

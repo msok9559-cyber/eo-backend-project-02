@@ -17,7 +17,7 @@ spring:
     database: h2
     open-in-view: false
     hibernate:
-      ddl-auto: none
+      ddl-auto: create
     properties:
       hibernate:
         jdbc:
