@@ -27,6 +27,8 @@ public class CommentDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    private Integer commentsCount;
+
     // 정적 팩토리 메서드(static factory method)
     public static CommentDto from(@NotNull CommentEntity commentEntity) {
         return CommentDto.builder()
@@ -36,6 +38,7 @@ public class CommentDto {
                 .content(commentEntity.getContent())
                 .createdAt(commentEntity.getCreatedAt())
                 .updatedAt(commentEntity.getUpdatedAt())
+                .commentsCount(commentEntity.getCommentsCount())
                 .build();
     }
 

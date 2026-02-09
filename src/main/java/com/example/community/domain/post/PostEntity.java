@@ -110,4 +110,5 @@ public class PostEntity {
         this.viewCount = (this.viewCount == null ? 0 : this.viewCount + 1);
         return this;
     }
+
 }

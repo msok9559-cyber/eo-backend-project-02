@@ -6,6 +6,7 @@
     <title>signup</title>
     <link rel="stylesheet" href="/css/reset.css">
     <link rel="stylesheet" href="/css/signup.css">
+    <script src="/js/signup.js"></script>
 </head>
 <body id="signup-page">
 <main id="main-content">
@@ -64,6 +65,13 @@
                 <button type="button" id="verify-email" class="check-btn">인증</button>
             </div>
 
+            <!-- 인증번호 입력 (처음엔 숨김) -->
+            <div class="form-row" id="verify-row" style="display:none;">
+                <label for="verify-code">인증번호</label>
+                <input type="text" id="verify-code" placeholder="인증번호 6자리">
+                <button type="button" id="verify-confirm" class="check-btn">인증확인</button>
+            </div>
+
             <!-- 약관 동의 -->
             <div id="terms-group">
                 <div class="terms-item">
@@ -95,6 +103,5 @@
     <p>footer: 백엔드 개발자 양성과정 2차 프로젝트</p>
 </footer>
 
-<script src="/js/signup.js"></script>
 </body>
 </html>

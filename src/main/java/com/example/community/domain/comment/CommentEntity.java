@@ -38,15 +38,25 @@ public class CommentEntity {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "comments_count", nullable = false)
+    private Integer commentsCount;
+
     @Builder
     public CommentEntity(Long userId, PostEntity postEntity, String content) {
         this.userId = userId;
         this.postEntity = postEntity;
         this.content = content;
+
+        this.commentsCount = (commentsCount == null ? 0 : commentsCount);
     }
 
     public CommentEntity updateContent(String content) {
         this.content = content;
+        return this;
+    }
+
+    public CommentEntity increaseCommentsCount() {
+        this.commentsCount = (this.commentsCount == null ? 0 : this.commentsCount + 1);
         return this;
     }
 }
