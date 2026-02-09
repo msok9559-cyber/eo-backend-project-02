@@ -30,4 +30,13 @@ public interface UserService {
      */
     boolean delete(Long id);
 
+    /*
+    아이디 중복 체크
+     */
+    boolean existsByUsername(String username);
+
+    /*
+    닉네임 중복 체크
+     */
+    boolean existsByNickname(String nickname);
 }
