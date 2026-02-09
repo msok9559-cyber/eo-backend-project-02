@@ -134,4 +134,16 @@ public class UserServiceImpl implements UserService {
         return userDto;
     }
 
+    // 아아디 중복체크
+    @Override
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    // 닉네임 중복 체크
+    @Override
+    public boolean existsByNickname(String nickname) {
+        return userRepository.existsByNickname(nickname);
+    }
+
 }
