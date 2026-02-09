@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${postDto.title}"></title>
+    <style>
+        #container { width: 800px; }
+        #container > ul { list-style-type: none; padding: 0; display: flex; gap: 50px; }
+
+        #commentForm { margin: 30px 0; }
+        #commentForm > p > label > span { display: none; }
+        #commentForm > p > label > input[type="text"] {
+            display: block; width: 100%; box-sizing: border-box;
+        }
+        #commentForm > p > label > textarea {
+            display: block; width: 100%; height: 7em; line-height: 1.4; box-sizing: border-box;
+        }
+
+        #comments { margin: 30px 0; }
+        .comment-item { margin: 20px 0; }
+        .comment-item > span { display: block; }
+        .comment-created-at { font-size: smaller; }
+        .comment-buttons { margin-top: 10px; }
+    </style>
+    <script>
+        window.addEventListener('load', function () {
+            document.getElementById('delete')?.addEventListener('click', function (event) {
+                if (!window.confirm('Are you sure to delete the post?')) {
+                    event.preventDefault();
+                }
+            });
+        });
+    </script>
+    <script th:inline="javascript">
+        const postId = /*[[${postDto.id}]]*/ 1;
+    </script>
+    <script>
+        const COMMENT_API_URI = `/api/posts/${postId}/comments`;
+
+        window.addEventListener('load', function () {
+            const $comments = document.getElementById('comments');
+            const $commentForm = document.getElementById('commentForm');
+
+            // 댓글 목록 읽어오기
+            window.fetch(COMMENT_API_URI)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP Error: ${response.statusText}`);
+                    }
+
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('LIST:', data);
+
+                    let html = '';
+
+                    data.forEach(comment => {
+                        html += getHTMLCommentElement(comment);
+                    });
+
+                    $comments.innerHTML = html;
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+
+            // 댓글 등록
+            let isPosting = false;
+
+            $commentForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                if (isPosting) return;
+
+                const writer = this.writer.value;
+                const content = this.content.value;
+
+                if (writer.length <= 0 || content.length <= 0) {
+                    window.alert('You must enter a writer and content.')
+                    return;
+                }
+
+                isPosting = true;
+                $commentForm.submit.disabled = true;
+
+                window.fetch(COMMENT_API_URI, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        postId: postId,
+                        writer: writer,
+                        content: content,
+                    })
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP Error: ${response.statusText}`);
+                        }
+
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('CREATE:', data);
+
+                        $comments.innerHTML += getHTMLCommentElement(data);
+
+                        window.alert('You have created a new comment!');
+
+                        $commentForm.writer.value = '';
+                        $commentForm.content.value = '';
+                        $commentForm.submit.disabled = false;
+                        isPosting = false;
+
+                        location.href += `#comment-${data.id}`;
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            }); // #commentForm.onsubmit
+
+            $comments.addEventListener('click', function (event) {
+                if (!event.target || event.target === this) return;
+
+                // 댓글 삭제
+                if (event.target.classList.contains('comment-button-delete')) {
+                    const commentId = event.target.dataset.id;
+                    if (!commentId) return;
+
+                    if (!window.confirm('Are you sure to delete the comment?')) return;
+
+                    console.log('DELETE: ' + commentId);
+
+                    window.fetch(COMMENT_API_URI + `/${commentId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP Error: ${response.statusText}`);
+                            }
+
+                            const $thisComment = $comments.querySelector(`#comment-${commentId}`);
+                            $comments.removeChild($thisComment);
+                        })
+                        .catch(error => {
+                            console.error(error);
+                        });
+                } else if (event.target.classList.contains('comment-button-edit')) {
+                    const commentId = event.target.dataset.id;
+                    if (!commentId) return;
+
+                    console.log('UPDATE: ' + commentId);
+
+                    const $thisComment = $comments.querySelector(`#comment-${commentId}`);
+                    const writer = $thisComment.querySelector('.comment-writer').innerHTML;
+                    const content = $thisComment.querySelector('.comment-content').innerHTML;
+                    // const createdAt = $thisComment.querySelector('.comment-created-at').dataset.value;
+
+                    const commentHTML = $thisComment.innerHTML;
+
+                    $thisComment.innerHTML = `<form id="commentEditForm">
+  <p>
+    <label>
+      <span>Writer:</span>
+      <input type="text" name="writer" placeholder="Your name" value="${writer}" required>
+    </label>
+  </p>
+  <p>
+    <label>
+      <span>Comment:</span>
+      <textarea name="content" placeholder="Your comment" required>${content}</textarea>
+    </label>
+  </p>
+  <p>
+    <input type="submit" name="submit" value="Submit">
+    <button type="button" name="cancel" id="cancelEdit">Cancel</button>
+  </p>
+</form>`;
+
+                    $thisComment.querySelector('#commentEditForm').addEventListener('submit', function (event) {
+                        event.preventDefault();
+
+                        if (isPosting) return;
+
+                        const writer = this.writer.value;
+                        const content = this.content.value;
+
+                        if (writer.length <= 0 || content.length <= 0) {
+                            window.alert('You must enter a writer and content.')
+                            return;
+                        }
+
+                        isPosting = true;
+
+                        window.fetch(COMMENT_API_URI + `/${commentId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                id: commentId,
+                                postId: postId,
+                                writer: writer,
+                                content: content,
+                            })
+                        })
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`HTTP Error: ${response.statusText}`);
+                                }
+
+                                return response.json();
+                            })
+                            .then(data => {
+                                console.log('UPDATE:', data);
+                                $thisComment.innerHTML = getHTMLCommentElement(data);
+
+                                isPosting = false;
+                            })
+                            .catch(error => {
+                                console.error(error);
+                            });
+                    });
+
+                    $thisComment.querySelector('#cancelEdit').addEventListener('click', function (event) {
+                        $thisComment.innerHTML = commentHTML;
+                    });
+                }
+            });
+        });
+
+        /**
+         * 댓글을 표현하는 HTML 형식의 문자열 생성
+         *
+         * @param comment CommentDto 형식의 JSON
+         */
+        function getHTMLCommentElement(comment) {
+            return `<div id="comment-${comment.id}" class="comment-item" data-id="${comment.id}">
+<span class="comment-writer">${comment.writer}</span>
+<span class="comment-content">${comment.content}</span>
+<span class="comment-created-at" data-value="${comment.createdAt}">${formatDateTime(comment.createdAt)}</span>
+<div class="comment-buttons">
+  <button type="button" class="comment-button-edit" data-id="${comment.id}">Edit</button>
+  <button type="button" class="comment-button-delete" data-id="${comment.id}">Delete</button>
+</div>
+</div>`;
+        }
+
+        /**
+         * ISO 8601 형식의 문자열을 "yyyy-MM-dd HH:mm" 형식으로 변환
+         */
+        function formatDateTime(strDate) {
+            const date = new Date(strDate);
+
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            // const seconds = date.getSeconds().toString().padStart(2, '0');
+
+            return `${year}-${month}-${day} ${hours}:${minutes}`;
+        }
+
+        /*
+         * React
+         * Vue.js
+         * Next.js
+         */
+
+    </script>
+</head>
+<body>
+
+<div id="container" th:object="${postDto}">
+    <h1 th:text="*{title}"></h1>
+
+    <ul id="info">
+        <li>ID: <span th:text="*{id}"></span></li>
+        <li>Writer: <span th:text="*{writer}"></span></li>
+        <li>Date: <span th:text="*{#temporals.format(createdAt, 'yyyy-MM-dd HH:mm:ss')}"></span></li>
+        <li>Last updated: <span th:text="*{#temporals.format(updatedAt, 'yyyy-MM-dd HH:mm:ss')}"></span></li>
+    </ul>
+
+    <p th:text="*{content}"></p>
+
+    <hr>
+
+    <p>
+        [<a th:href="@{list(page=${criteria.page})}">List</a>]
+        [<a th:href="@{update(id=*{id}, page=${criteria.page})}">Update</a>]
+        [<a th:href="@{delete(id=*{id}, page=${criteria.page})}" id="delete">Delete</a>]
+    </p>
+
+    <hr>
+
+    <form id="commentForm">
+        <p>
+            <label>
+                <span>Writer:</span>
+                <input type="text" name="writer" placeholder="Your name" required>
+            </label>
+        </p>
+        <p>
+            <label>
+                <span>Comment:</span>
+                <textarea name="content" placeholder="Your comment" required></textarea>
+            </label>
+        </p>
+        <p>
+            <input type="submit" name="submit" value="Submit">
+        </p>
+    </form>
+
+    <hr>
+
+    <div id="comments"></div>
+</div> <!-- /#container -->
+
+</body>
+</html>

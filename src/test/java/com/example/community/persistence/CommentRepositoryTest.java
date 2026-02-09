@@ -47,8 +47,8 @@ public class CommentRepositoryTest {
                 .boardId(1L)
                 .userId(2L)
                 .viewCount(3)
-                .likeCount(5)
-                .commentCount(3)
+                .likesCount(5)
+                .commentsCount(3)
                 .build();
 
     }

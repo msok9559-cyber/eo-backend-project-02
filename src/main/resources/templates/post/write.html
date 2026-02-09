@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${title}"></title>
+    <style>
+        #container { width: 800px; }
+        #container > form > p > label { display: block; }
+        #container > form > p > label > span { display: block; }
+        #container > form > p > label > input[type="text"],
+        #container > form > p > label > textarea {
+            display: block; width: 100%; box-sizing: border-box; font: 1em sans-serif;
+        }
+        #container > form > p > label > textarea { line-height: 1.5; height: 15em; }
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <h1 th:text="${title}"></h1>
+
+    <form th:action="@{${action}}" method="post" th:object="${postDto}">
+        <input type="hidden" name="id" th:value="*{id}" th:if="${postDto}">
+        <input type="hidden" name="page" th:value="${criteria.page}" th:if="${criteria}">
+        <input type="hidden" name="size" th:value="${criteria.size}" th:if="${criteria}">
+        <p>
+            <label>
+                <span>Title:</span>
+                <input type="text" name="title" th:value="${postDto} ? *{title}">
+            </label>
+        </p>
+        <p>
+            <label>
+                <span>Writer:</span>
+                <input type="text" name="writer" th:value="${postDto} ? *{writer}">
+            </label>
+        </p>
+        <p>
+            <label>
+                <span>Content:</span>
+                <textarea name="content" th:text="${postDto} ? *{content}"></textarea>
+            </label>
+        </p>
+        <p>
+            <input type="submit" th:value="${#strings.capitalize(action)}">
+        </p>
+    </form>
+</div>
+
+</body>
+</html>

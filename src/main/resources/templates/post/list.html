@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Board List</title>
+    <style>
+        #list > caption { caption-side: top; text-align: right; margin-bottom: 6px; }
+
+        #pagination {
+            list-style-type: none; padding: 0; margin: 1em 0;
+            font: 0.825em Tahoma, Verdana, sans-serif;
+            display: flex; gap: 1em;
+        }
+
+        #pagination > li { border: 1px solid #aaa; }
+
+        #pagination > li > a, #pagination > li > span {
+            display: block; padding: 0.3em 0.6em;
+        }
+
+        #pagination > li > a { text-decoration: none; }
+
+        #pagination > li > span {
+            background-color: #555; font-weight: bold; color: white;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Board List</h1>
+
+<table border="1" id="list">
+    <caption th:object="${pagination}">
+        <span th:text="*{pageNumber}"></span> / <span th:text="*{lastPage}"></span>
+    </caption>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Title</th>
+        <th>Writer</th>
+        <th>Date</th>
+        <th>Last Updated</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="postDto : ${postDtoList}" th:object="${postDto}">
+        <td th:text="*{id}"></td>
+        <td><a th:href="@{read(id=*{id}, page=${pagination.pageNumber})}" th:text="*{title}"></a></td>
+        <td th:text="*{writer}"></td>
+        <td th:text="*{#temporals.format(createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+        <td th:text="*{#temporals.format(updatedAt, 'yyyy-MM-dd HH:mm')}"></td>
+    </tr>
+    </tbody>
+</table>
+
+<ol id="pagination" th:object="${pagination}">
+    <li th:if="*{startPage} != 1"><a th:href="@{list(page=1)}">First</a></li>
+    <li th:if="*{prev}"><a th:href="@{list(page=*{startPage} - 1)}">Prev</a></li>
+    <th:block th:each="page : *{#numbers.sequence(startPage, endPage)}">
+        <li th:if="${page} == *{pageNumber}"><span th:text="${page}"></span></li>
+        <li th:unless="${page} == *{pageNumber}"><a th:href="@{list(page=${page})}" th:text="${page}"></a></li>
+    </th:block>
+    <li th:if="*{next}"><a th:href="@{list(page=*{endPage} + 1)}">Next</a></li>
+    <li th:if="*{endPage} != *{lastPage}"><a th:href="@{list(page=*{lastPage})}">Last</a></li>
+</ol>
+
+<p>
+    [<a th:href="@{write}">Write</a>]
+</p>
+
+</body>
+</html>
