@@ -2,11 +2,99 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>signup</title>
+    <link rel="stylesheet" href="/css/reset.css">
+    <link rel="stylesheet" href="/css/signup.css">
 </head>
-<body>
+<body id="signup-page">
+<main id="main-content">
+    <div id="signup-container">
+        <!-- 로고 + 제목 -->
+        <div id="title-area">
+            <a th:href="@{/}">
+                <img src="/images/logo.png" alt="OneBoard">
+            </a>
+            <h2>회원가입</h2>
+        </div>
 
+        <!-- 에러 메시지 -->
+        <div id="error-message" th:if="${error}">
+            <span th:text="${error}"></span>
+        </div>
 
+        <!-- 회원가입 폼 -->
+        <form id="signup-form" th:action="@{/signup}" method="post">
+            <!-- 이름 -->
+            <div class="form-row">
+                <label for="name">이름</label>
+                <input type="text" id="name" name="name" placeholder="이름" required>
+            </div>
 
+            <!-- 아이디 + 중복체크 -->
+            <div class="form-row">
+                <label for="username">아이디</label>
+                <input type="text" id="username" name="username" placeholder="아이디" required>
+                <button type="button" id="check-username" class="check-btn">중복확인</button>
+            </div>
+
+            <!-- 비밀번호 -->
+            <div class="form-row">
+                <label for="password">비밀번호</label>
+                <input type="password" id="password" name="password" placeholder="비밀번호" autocomplete="off" required>
+            </div>
+
+            <!-- 비밀번호 확인 -->
+            <div class="form-row">
+                <label for="password-confirm">비밀번호 확인</label>
+                <input type="password" id="password-confirm" name="password-confirm" placeholder="비밀번호 확인" autocomplete="off" required>
+            </div>
+
+            <!-- 닉네임 + 중복체크 -->
+            <div class="form-row">
+                <label for="nickname">닉네임</label>
+                <input type="text" id="nickname" name="nickname" placeholder="닉네임" required>
+                <button type="button" id="check-nickname" class="check-btn">중복확인</button>
+            </div>
+
+            <!-- Email + 인증 -->
+            <div class="form-row">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="example@email.com" required>
+                <button type="button" id="verify-email" class="check-btn">인증</button>
+            </div>
+
+            <!-- 약관 동의 -->
+            <div id="terms-group">
+                <div class="terms-item">
+                    <input type="checkbox" id="terms-privacy" name="terms-privacy" required>
+                    <label for="terms-privacy">개인정보 처리방침 동의 (필수)</label>
+                </div>
+                <div class="terms-item">
+                    <input type="checkbox" id="terms-service" name="terms-service" required>
+                    <label for="terms-service">서비스 이용약관 동의 (필수)</label>
+                </div>
+                <div class="terms-item">
+                    <input type="checkbox" id="terms-marketing" name="terms-marketing">
+                    <label for="terms-marketing">마케팅 수신 동의 (선택)</label>
+                </div>
+            </div>
+
+            <!-- 회원가입 버튼 -->
+            <button type="submit" id="signup-btn">회원가입</button>
+        </form>
+
+        <!-- 로그인 링크 -->
+        <div id="login-link">
+            이미 계정이 있으신가요? <a th:href="@{/login}">로그인</a>
+        </div>
+    </div>
+</main>
+
+<footer id="footer">
+    <p>footer: 백엔드 개발자 양성과정 2차 프로젝트</p>
+</footer>
+
+<script src="/js/signup.js"></script>
 </body>
 </html>

@@ -29,7 +29,9 @@ public class SecurityConfiguration {
     public WebSecurityCustomizer webSecurityCustomizer() {
         return webSecurity -> webSecurity.ignoring()
                 .requestMatchers("/h2-console/**")
-                .requestMatchers("/static/**");
+                .requestMatchers("/static/**")
+                .requestMatchers("/css/**")
+                .requestMatchers("/images/**");
                 //.requestMatchers("/check-username", "/check-nickname");
     }
 

@@ -27,12 +27,12 @@ public class MessageDto {
     private String receiverUsername;
     private String receiverNickname;
 
-    @NotNull(message = "내용을 입력해주세요")
-    @Size(min = 1, max = 1000, message = "내용은 1자 이상 1000자 이하로 작성해 주셔야 합니다.")
+    @NotBlank(message = "제목을 입력해주세요")
+    @Size(min = 1, max = 1000, message = "제목은 1자 이상 1000자 이하로 작성해 주셔야 합니다.")
     private String title;
 
-    @NotNull(message = "제목을 입력해주세요.")
-    @Size(min = 1, max = 50, message = "제목은 1자 이상 50자 이하로 작성해 주셔야 합니다.")
+    @NotBlank(message = "내용을 입력해주세요.")
+    @Size(min = 1, max = 50, message = "내용은 1자 이상 50자 이하로 작성해 주셔야 합니다.")
     private String content;
 
     private Integer isRead;

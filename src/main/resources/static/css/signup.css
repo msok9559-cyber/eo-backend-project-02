@@ -1,0 +1,190 @@
+/* 전체 레이아웃 */
+#signup-page {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f5f5f5;
+    min-height: 100vh;
+    line-height: 1.5;
+}
+
+/* 메인 컨텐츠 */
+#main-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
+    box-sizing: border-box;
+    min-height: 100vh;
+}
+
+/* 회원가입 컨테이너 */
+#signup-container {
+    background: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 500px;
+    box-sizing: border-box;
+}
+
+/* 제목 영역 (로고 + 회원가입) */
+#title-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+#title-area > a > img {
+    height: 45px;
+    display: block;
+}
+
+#title-area > h2 {
+    font-size: 28px;
+    font-weight: bold;
+    margin: 0;
+}
+
+/* 에러 메시지 */
+#error-message {
+    background-color: #fee;
+    color: #c33;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 14px;
+}
+
+/* 폼 */
+#signup-form {
+    width: 100%;
+}
+
+/* 폼 행 (이름 + 입력칸 + 버튼) */
+#signup-form > .form-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+#signup-form > .form-row > label {
+    min-width: 80px;
+    font-size: 14px;
+    color: #333;
+}
+
+#signup-form > .form-row > input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+#signup-form > .form-row > input:focus {
+    outline: none;
+    border-color: #333;
+}
+
+/* 중복확인/인증 버튼 */
+#signup-form > .form-row > .check-btn {
+    min-width: 80px;
+    padding: 10px 15px;
+    background-color: #666;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+#signup-form > .form-row > .check-btn:hover {
+    background-color: #555;
+}
+
+/* 약관 동의 */
+#terms-group {
+    margin: 25px 0;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+}
+
+#terms-group > .terms-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+#terms-group > .terms-item:last-child {
+    margin-bottom: 0;
+}
+
+#terms-group > .terms-item > input {
+    cursor: pointer;
+    width: auto;
+}
+
+#terms-group > .terms-item > label {
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+}
+
+/* 회원가입 버튼 */
+#signup-btn {
+    width: 100%;
+    padding: 14px;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+#signup-btn:hover {
+    background-color: #555;
+}
+
+/* 로그인 링크 */
+#login-link {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+    color: #666;
+}
+
+#login-link > a {
+    color: #333;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+#login-link > a:hover {
+    text-decoration: underline;
+}
+
+/* 푸터 */
+#footer {
+    padding: 20px;
+    text-align: center;
+    background-color: #f0f0f0;
+    color: #666;
+    font-size: 12px;
+}
+
+#footer > p {
+    line-height: 1.5;
+}
