@@ -44,7 +44,7 @@ public class MessageEntity {
     private String title;
 
     // 쪽지 내용 조건 : 최대 1000자
-    @Column(columnDefinition = "TEXT", nullable = false, length = 1000)
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
     // 읽음 여부 : 0 = 읽지않음 1 = 읽음
@@ -85,11 +85,14 @@ public class MessageEntity {
         this.receiver = receiver;
         this.title = title;
         this.content = content;
+        this.isRead = 0;
+        this.senderDeleteState = 0;
+        this.receiverDeleteState = 0;
     }
 
     /**
      * 쪽지 읽음 처리
-     * 상태를 1초 바꾸고 현재 시간을 저장
+     * 상태를 1로 바꾸고 현재 시간을 저장
      */
     public void markAsRead() {
         if (this.isRead == 0) {
