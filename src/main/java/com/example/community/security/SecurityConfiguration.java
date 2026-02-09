@@ -31,7 +31,8 @@ public class SecurityConfiguration {
                 .requestMatchers("/h2-console/**")
                 .requestMatchers("/static/**")
                 .requestMatchers("/css/**")
-                .requestMatchers("/images/**");
+                .requestMatchers("/images/**")
+                .requestMatchers("/js/**");
                 //.requestMatchers("/check-username", "/check-nickname");
     }
 
@@ -51,6 +52,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
                         .requestMatchers("/", "/login", "/signup", "/check-username", "/check-nickname").permitAll()
+                        .requestMatchers("/send-verification-email", "/verify-email-code").permitAll()
                         .requestMatchers("/board/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/error/**").permitAll()
