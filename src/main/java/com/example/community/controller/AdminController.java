@@ -13,6 +13,15 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import com.example.community.security.CustomUserDetails;
+import com.example.community.domain.board.BoardDto;
+import com.example.community.domain.post.PostDto;
+import com.example.community.domain.comment.CommentDto;
+import com.example.community.service.BoardService;
+import com.example.community.service.PostService;
+import com.example.community.service.CommentService;
+import org.springframework.data.domain.Sort;
+import java.util.List;
+import java.util.Optional;
 
 
 import java.util.HashMap;
@@ -24,6 +33,9 @@ import java.util.Map;
 @Slf4j
 public class AdminController {
     private final AdminService adminService;
+    private final BoardService boardService;
+    private final PostService postService;
+    private final CommentService commentService;
 
     //관리자 대시보드 페이지
     @GetMapping("/dashboard")
@@ -177,9 +189,6 @@ public class AdminController {
         }
     }
 
-    // TODO: 게시판 관리 API
-    // TODO: 게시글 관리 API
-    // TODO: 댓글 관리 API
-    // TODO: 공지사항 관리 API
+
 
 }

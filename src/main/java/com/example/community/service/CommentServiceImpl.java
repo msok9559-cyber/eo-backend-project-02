@@ -7,6 +7,8 @@ import com.example.community.persistence.CommentRepository;
 import com.example.community.persistence.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -33,6 +35,14 @@ public class CommentServiceImpl implements CommentService {
         // 지금은 관리자 판단 로직이 없으므로 false
         // 나중에 UserRepository 연결하면 여기만 수정하면 됨
         return false;
+    }
+
+    @Override
+    public Page<CommentDto> getAllComments(Pageable pageable) {
+        log.info("Get all comments - pageable: {}", pageable);
+
+        return commentRepository.findAll(pageable)
+                .map(CommentDto::from);
     }
 
     /* =====================
