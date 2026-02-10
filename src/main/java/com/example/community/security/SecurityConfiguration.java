@@ -53,8 +53,9 @@ public class SecurityConfiguration {
                         .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
                         .requestMatchers("/", "/login", "/signup", "/check-username", "/check-nickname").permitAll()
                         .requestMatchers("/send-verification-email", "/verify-email-code").permitAll()
-                        .requestMatchers("/board/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/css/**", "/images/**", "/js/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/board/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/error/**").permitAll()
                         .anyRequest().authenticated()
                 );
