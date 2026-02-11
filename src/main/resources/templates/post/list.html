@@ -1,106 +1,334 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>게시판 게시물</title>
+    <title>게시물</title>
+    <link rel="stylesheet" href="/css/index.css">
     <style>
-        #list > caption { caption-side: top; text-align: right; margin-bottom: 6px; }
-
-        #pagination {
-            list-style-type: none; padding: 0; margin: 1em 0;
-            font: 0.825em Tahoma, Verdana, sans-serif;
-            display: flex; gap: 1em;
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            margin: 20px 0;
+            width: 100%;
         }
-
-        #pagination > li { border: 1px solid #aaa; }
-
-        #pagination > li > a, #pagination > li > span {
-            display: block; padding: 0.3em 0.6em;
+        .btn-write {
+            position: absolute;
+            right: 0;
+            padding: 8px 18px;
+            background-color: #667;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: bold;
         }
-
-        #pagination > li > a { text-decoration: none; }
-
-        #pagination > li > span {
-            background-color: #555; font-weight: bold; color: white;
+        .btn-write:hover {
+            background-color: #555;
         }
+        .comment-count {
+            color: #e74c3c;
+            font-size: 13px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        .empty-message {
+            text-align: center;
+            padding: 50px 0;
+            color: #888;
+        }
+        #post-table { margin-top: 10px; }
     </style>
+    <script src="/js/index.js" defer></script>
 </head>
 <body>
 
-<h1>Board List</h1>
+<div id="wrapper">
+    <!-- 헤더 -->
+    <header id="header">
+        <div id="logo">
+            <a th:href="@{/}">
+                <img src="/images/logo.png" alt="로고">
+            </a>
+        </div>
+        <div id="banner">
+            <!-- 배너 이미지 CSS background-image로 표시 -->
+        </div>
+    </header>
 
-<table>
-    <caption th:object="${pagination}">
-        <span th:text="*{pageNumber}"></span> / <span th:text="*{lastPage}"></span>
-    </caption>
-    <thead>
-    <tr>
-        <th>ID</th>
-        <th>Title</th>
-        <th>Writer</th>
-        <th>Views</th>
-        <th>Comments</th>
-        <th>Likes</th>
-        <th>Date</th>
-        <th>Last Updated</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="postDto : ${postPage.content}" th:object="${postDto}">
-        <td th:text="*{id}"></td>
+    <!-- 메인 레이아웃 (3단) -->
+    <div id="main-layout">
 
-        <td>
-            <a th:href="@{/board/{boardId}/post/read(
-                    boardId=${boardId},
-                    id=${postDto.id},
-                    page=${criteria.page},
-                    size=${criteria.size}
-                  )}"
-               th:text="*{title}"></a>
-        </td>
+        <!-- 왼쪽 사이드바 -->
+        <aside id="left-sidebar">
+            <!-- 공지사항 -->
+            <div class="sidebar-section">
+                <h3>
+                    공지사항
 
-        <td th:text="*{writer}"></td>
-        <td th:text="*{viewCount}"></td>
-        <td th:text="*{commentsCount}"></td>
-        <td th:text="*{likesCount}"></td>
-        <td th:text="*{#temporals.format(createdAt, 'yyyy-MM-dd HH:mm')}"></td>
-        <td th:text="*{#temporals.format(updatedAt, 'yyyy-MM-dd HH:mm')}"></td>
-    </tr>
-    </tbody>
-</table>
+                    <!-- 관리자만 공지 카테고리 추가 -->
+                    <a th:href="@{/admin/board/create(category='NOTICE')}"
+                       class="add-board-btn"
+                       aria-label="공지사항 추가"
+                       sec:authorize="hasRole('ADMIN')">
+                        <span>공지 카테고리 추가</span>
+                    </a>
+                </h3>
+                <ul class="sidebar-menu">
+                    <li th:each="board : ${noticeBoardList}">
+                        <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
+                           th:text="${board.title}">공지 카테고리</a>
+                    </li>
 
-<ol id="pagination" th:object="${pagination}">
-    <li th:if="*{startPage} != 1">
-        <a th:href="@{/board/{boardId}/post/list(boardId=${boardId}, page=1, size=${criteria.size})}">First</a>
-    </li>
+                    <li th:if="${noticeBoardList == null || #lists.isEmpty(noticeBoardList)}">
+                        <span>등록된 공지 카테고리가 없습니다.</span>
+                    </li>
+                </ul>
+            </div>
 
-    <li th:if="*{prev}">
-        <a th:href="@{/board/{boardId}/post/list(boardId=${boardId}, page=*{startPage} - 1, size=${criteria.size})}">Prev</a>
-    </li>
+            <!-- 게시판 목록 -->
+            <div class="sidebar-section">
+                <h3>📋 게시판
+                    <!-- 관리자만 게시판 추가 -->
+                    <a th:href="@{/admin/board/create}"
+                       class="add-board-btn"
+                       aria-label="게시판 추가"
+                       sec:authorize="hasRole('ADMIN')">
+                        <span>게시판 추가</span>
+                    </a>
+                </h3>
+                <ul class="sidebar-menu">
+                    <th:block th:each="board : ${boardList}">
+                        <li>
+                            <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
+                               th:text="${board.title}">게시판</a>
+                        </li>
+                    </th:block>
+                </ul>
+            </div>
+        </aside>
 
-    <th:block th:each="p : *{#numbers.sequence(startPage, endPage)}">
-        <li th:if="${p} == *{pageNumber}">
-            <span th:text="${p}"></span>
-        </li>
-        <li th:unless="${p} == *{pageNumber}">
-            <a th:href="@{/board/{boardId}/post/list(boardId=${boardId}, page=${p}, size=${criteria.size})}"
-               th:text="${p}"></a>
-        </li>
-    </th:block>
+        <!-- 중앙 메인 컨텐츠 -->
+        <main id="main-content">
 
-    <li th:if="*{next}">
-        <a th:href="@{/board/{boardId}/post/list(boardId=${boardId}, page=*{endPage} + 1, size=${criteria.size})}">Next</a>
-    </li>
+            <!-- 공지사항 영역 -->
+            <section id="notice-section">
+                <h4>공지사항</h4>
 
-    <li th:if="*{endPage} != *{lastPage}">
-        <a th:href="@{/board/{boardId}/post/list(boardId=${boardId}, page=*{lastPage}, size=${criteria.size})}">Last</a>
-    </li>
-</ol>
+                <div class="notice-item" th:each="notice : ${noticeList}">
+                    <a th:href="@{/board/{boardId}/post/read(boardId=${notice.boardId}, id=${notice.id})}"
+                       th:text="${notice.title}">
+                        공지 제목
+                    </a>
+                </div>
 
-<p>
-    [<a th:href="@{/board/{boardId}/post/write(boardId=${boardId})}">Write</a>]
-</p>
+                <div class="notice-item" th:if="${noticeList == null || #lists.isEmpty(noticeList)}">
+                    <span>등록된 공지사항이 없습니다.</span>
+                </div>
+            </section>
+
+            <table id="post-table">
+                <thead>
+                <tr>
+                    <th style="width: 60px;">번호</th>
+                    <th>제목</th>
+                    <th style="width: 100px;">작성자</th>
+                    <th style="width: 100px;">날짜</th>
+                    <th style="width: 60px;">조회</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${tempPosts != null}" th:each="post, stat : ${tempPosts}">
+                    <td th:text="${stat.count}">1</td>
+                    <td class="title">
+                        <a href="#" class="post-title-link"
+                           th:data-post-id="${post.id}"
+                           th:data-post-title="${post.title}"
+                           th:data-post-content="${post.content}"
+                           th:data-post-writer="${post.writer}"
+                           th:data-post-date="${post.date}"
+                           th:data-post-views="${post.views}"
+                           th:text="${post.title}">게시글 제목</a>
+                    </td>
+                    <td th:text="${post.writer}">작성자</td>
+                    <td th:text="${post.date}">02-09</td>
+                    <td th:text="${post.views}">123</td>
+                </tr>
+
+                <tr th:if="${postPage != null && !tempPosts}" th:each="post, stat : ${postPage.content}">
+                    <td th:text="${postPage.totalElements - (postPage.number * postPage.size) - stat.index}">1</td>
+                    <td class="title">
+                        <a th:href="@{/board/{boardId}/post/read(boardId=${post.boardId}, id=${post.id})}"
+                           th:text="${post.title}">게시글 제목</a>
+                        <span th:if="${post.commentsCount > 0}" class="comment-count"
+                              th:text="' (' + ${post.commentsCount} + ')'"></span>
+                    </td>
+                    <td th:text="${post.writer}">작성자</td>
+                    <td th:text="${#temporals.format(post.createdAt, 'MM-dd')}">02-09</td>
+                    <td th:text="${post.viewCount}">123</td>
+                </tr>
+
+                <tr th:if="${(postPage == null || #lists.isEmpty(postPage.content)) && (tempPosts == null || #lists.isEmpty(tempPosts))}">
+                    <td colspan="5" class="empty-message">등록된 게시글이 없습니다.</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- 페이징 -->
+            <div class="pagination-container">
+                <div id="pagination" th:if="${postPage != null && postPage.totalPages > 0}">
+                    <!-- 이전 -->
+                    <a th:if="${postPage.hasPrevious()}"
+                       th:href="@{/(page=${postPage.number}, searchType=${searchType}, keyword=${keyword})}"
+                       title="이전 페이지">‹</a>
+
+                    <!-- 페이지 번호 -->
+                    <th:block th:each="i : ${#numbers.sequence(1, postPage.totalPages)}">
+                        <span th:if="${i == postPage.number + 1}"
+                              class="current"
+                              th:text="${i}">1</span>
+                        <a th:unless="${i == postPage.number + 1}"
+                           th:href="@{/(page=${i}, searchType=${searchType}, keyword=${keyword})}"
+                           th:text="${i}">1</a>
+                    </th:block>
+
+                    <!-- 다음 -->
+                    <a th:if="${postPage.hasNext()}"
+                       th:href="@{/(page=${postPage.number + 2}, searchType=${searchType}, keyword=${keyword})}"
+                       title="다음 페이지">›</a>
+                </div>
+                <a th:href="@{/board/{id}/post/write(id=${boardId})}" class="btn-write">글쓰기</a>
+            </div>
+
+            <!-- 검색 영역 -->
+            <form id="search-section" th:action="@{/}" method="get">
+                <select name="searchType">
+                    <option value="title" th:selected="${searchType == 'title'}">제목</option>
+                    <option value="content" th:selected="${searchType == 'content'}">내용</option>
+                    <option value="writer" th:selected="${searchType == 'writer'}">작성자</option>
+                    <option value="titleContent" th:selected="${searchType == 'titleContent'}">제목+내용</option>
+                </select>
+                <input type="text"
+                       name="keyword"
+                       th:value="${keyword}"
+                       placeholder="검색어를 입력하세요"
+                       maxlength="100">
+                <button type="submit">🔍검색</button>
+            </form>
+
+        </main>
+
+        <!-- 오른쪽 사이드바 -->
+        <aside id="right-sidebar">
+
+            <!-- 비로그인 시: 로그인 폼 -->
+            <div id="auth-box" sec:authorize="!isAuthenticated()">
+                <h3>로그인</h3>
+                <form th:action="@{/login}" method="post">
+                    <input type="text"
+                           name="username"
+                           placeholder="아이디"
+                           autocomplete="username"
+                           required>
+                    <input type="password"
+                           name="password"
+                           placeholder="비밀번호"
+                           autocomplete="current-password"
+                           required>
+                    <button type="submit">로그인</button>
+                </form>
+                <div class="auth-links">
+                    <a th:href="@{/signup}">회원가입</a>
+                    <a th:href="@{/find-password}">ID/PW 찾기</a>
+                </div>
+            </div>
+
+            <!-- 로그인 후: 사용자 정보 (로그인 폼과 같은 위치) -->
+            <div id="auth-box2" sec:authorize="isAuthenticated()">
+                <div class="user-info">
+                    <p><span sec:authentication="name">사용자</span>님</p>
+                    <div class="profile-links">
+                        <a th:href="@{/mypage}">마이페이지</a>
+                        <a th:href="@{/messages}">쪽지함</a>
+                        <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/dashboard}">관리자</a>
+                        <form th:action="@{/logout}" method="post" onsubmit="return confirmLogout();">
+                            <button type="submit">로그아웃</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 인기 게시글 랭킹 -->
+            <div id="ranking-section">
+                <h3>인기 게시글</h3>
+                <ul class="ranking-list">
+                    <li class="ranking-item">
+                        <span class="ranking-number">1</span>
+                        <a href="#" title="인기 게시글 제목입니다">인기 게시글 제목입니다</a>
+                        <span class="ranking-views">1.2k</span>
+                    </li>
+                    <li class="ranking-item">
+                        <span class="ranking-number">2</span>
+                        <a href="#" title="두 번째 인기 게시글">두 번째 인기 게시글</a>
+                        <span class="ranking-views">890</span>
+                    </li>
+                    <li class="ranking-item">
+                        <span class="ranking-number">3</span>
+                        <a href="#" title="세 번째 인기 게시글">세 번째 인기 게시글</a>
+                        <span class="ranking-views">654</span>
+                    </li>
+                    <li class="ranking-item">
+                        <span class="ranking-number">4</span>
+                        <a href="#" title="네 번째 인기 게시글">네 번째 인기 게시글</a>
+                        <span class="ranking-views">532</span>
+                    </li>
+                    <li class="ranking-item">
+                        <span class="ranking-number">5</span>
+                        <a href="#" title="다섯 번째 인기 게시글">다섯 번째 인기 게시글</a>
+                        <span class="ranking-views">421</span>
+                    </li>
+                    <li class="ranking-item">
+                        <span class="ranking-number">6</span>
+                        <a href="#" title="여섯 번째 인기 게시글">여섯 번째 인기 게시글</a>
+                        <span class="ranking-views">398</span>
+                    </li>
+                    <li class="ranking-item">
+                        <span class="ranking-number">7</span>
+                        <a href="#" title="일곱 번째 인기 게시글">일곱 번째 인기 게시글</a>
+                        <span class="ranking-views">356</span>
+                    </li>
+                    <li class="ranking-item">
+                        <span class="ranking-number">8</span>
+                        <a href="#" title="여덟 번째 인기 게시글">여덟 번째 인기 게시글</a>
+                        <span class="ranking-views">312</span>
+                    </li>
+                    <li class="ranking-item">
+                        <span class="ranking-number">9</span>
+                        <a href="#" title="아홉 번째 인기 게시글">아홉 번째 인기 게시글</a>
+                        <span class="ranking-views">289</span>
+                    </li>
+                    <li class="ranking-item">
+                        <span class="ranking-number">10</span>
+                        <a href="#" title="열 번째 인기 게시글">열 번째 인기 게시글</a>
+                        <span class="ranking-views">267</span>
+                    </li>
+                </ul>
+            </div>
+
+        </aside>
+
+    </div>
+
+    <!-- 푸터 -->
+    <footer id="footer">
+        <p><strong>백엔드 개발자 양성과정 2차 프로젝트</strong></p>
+        <p>Community Platform © 2026 All rights reserved.</p>
+    </footer>
+
+</div>
 
 </body>
 </html>
