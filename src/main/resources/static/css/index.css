@@ -90,16 +90,14 @@ body {
     background-image: url("/images/plus.png");
     background-size: cover;
     background-repeat: no-repeat;
-
     top: 3px;
     right: 0;
-
     width: 20px;
     height: 20px;
     cursor: pointer;
 }
 
-.add-board-btn > span{
+.add-board-btn > span {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -183,6 +181,12 @@ body {
     border-radius: 4px;
 }
 
+.sidebar-menu > li > span {
+    color: #999;
+    font-size: 13px;
+    font-style: italic;
+}
+
 /* 중앙 메인 컨텐츠 */
 #main-content {
     flex: 1;
@@ -220,6 +224,17 @@ body {
     color: #f57c00;
 }
 
+.notice-item > a::before {
+    margin-right: 5px;
+}
+
+.notice-empty {
+    color: #999;
+    font-size: 13px;
+    text-align: center;
+    padding: 10px;
+}
+
 /* 게시글 목록 테이블 */
 #post-table {
     width: 100%;
@@ -239,6 +254,23 @@ body {
     font-weight: bold;
     color: #333;
     text-align: center;
+}
+
+/* 테이블 컬럼 너비 */
+#post-table .col-number {
+    width: 60px;
+}
+
+#post-table .col-writer {
+    width: 100px;
+}
+
+#post-table .col-date {
+    width: 100px;
+}
+
+#post-table .col-views {
+    width: 60px;
 }
 
 #post-table > tbody > tr {
@@ -267,6 +299,14 @@ body {
 #post-table > tbody > tr > td.title > a:hover {
     color: #667eea;
     text-decoration: underline;
+}
+
+/* 댓글 수 스타일 */
+.comment-count {
+    color: #ff6b6b;
+    font-size: 0.9em;
+    margin-left: 5px;
+    font-weight: bold;
 }
 
 /* 페이징 */
@@ -431,8 +471,7 @@ body {
     gap: 8px;
 }
 
-.profile-links > a,
-.profile-links > form > button {
+.profile-links > a {
     padding: 10px;
     background-color: white;
     border: 1px solid #ddd;
@@ -450,14 +489,28 @@ body {
     background-color: #f0f0f0;
 }
 
-.profile-links > form > button {
-    background-color: #dc3545;
-    color: white;
-    border-color: #dc3545;
-    font-weight: bold;
+/* 로그아웃 폼 */
+.logout-form {
+    display: block;
+    margin: 0;
+    padding: 0;
 }
 
-.profile-links > form > button:hover {
+.logout-btn {
+    width: 100%;
+    padding: 10px;
+    background-color: #dc3545;
+    color: white;
+    border: 1px solid #dc3545;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+    display: block;
+}
+
+.logout-btn:hover {
     background-color: #c82333;
 }
 
@@ -519,6 +572,18 @@ body {
 .ranking-views {
     font-size: 12px;
     color: #999;
+    min-width: 40px;
+    text-align: right;
+}
+
+.empty-ranking {
+    padding: 20px 0;
+}
+
+.empty-ranking > span {
+    color: #999;
+    font-size: 13px;
+    font-style: italic;
 }
 
 /* 푸터 */
@@ -540,4 +605,12 @@ body {
     text-align: center;
     padding: 40px;
     color: #999;
+}
+
+/* 검색어 하이라이트 */
+.search-highlight {
+    background-color: #ffeb3b;
+    padding: 2px 4px;
+    border-radius: 2px;
+    font-weight: bold;
 }

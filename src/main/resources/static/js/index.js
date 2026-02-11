@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // 페이지 로드 시 검색어 하이라이트
     highlightSearchKeyword();
 
-    // 게시글 상세보기 기능 초기화
-    initPostDetail();
+    // 로그아웃 확인 이벤트
+    initLogoutConfirm();
 
     // 사이드바 클릭 영역 확장
     initSidebarLinkClick();
@@ -64,13 +64,29 @@ function highlightInElements(selector, keyword) {
         const regex = new RegExp(`(${keyword})`, 'gi');
 
         if (regex.test(text)) {
-            element.innerHTML = text.replace(regex, '<mark style="background-color: #ffeb3b; padding: 2px 4px;">$1</mark>');
+            element.innerHTML = text.replace(regex, '<mark class="search-highlight">$1</mark>');
         }
     });
 }
 
 /**
- * 로그아웃 확인
+ * 로그아웃 확인 이벤트 초기화
+ */
+function initLogoutConfirm() {
+    const logoutBtn = document.querySelector('.logout-btn');
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            if (!confirm('로그아웃 하시겠습니까?')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    }
+}
+
+/**
+ * 로그아웃 확인 (전역 함수 - 하위 호환성)
  */
 function confirmLogout() {
     return confirm('로그아웃 하시겠습니까?');
