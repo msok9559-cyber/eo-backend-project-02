@@ -5,6 +5,7 @@ import com.example.community.security.CustomUserDetails;
 import com.example.community.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -188,6 +189,206 @@ public class AdminController {
             return ResponseEntity.badRequest().body(response);
         }
     }
+
+    /**
+     * 게시판 조회 API
+     */
+    @GetMapping("/boards")
+    @ResponseBody
+    public ResponseEntity<List<BoardDto>> getBoards() {
+        log.info("Get all boards");
+
+        List<BoardDto> boards = boardService.getList();
+        return ResponseEntity.ok(boards);
+    }
+
+    /**
+     * 게시판 생성 API
+     */
+    @PostMapping("/boards")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> createBoard(@RequestParam String title){
+        log.info("Create board - title: {]", title);
+        Map<String, Object> response = new HashMap<>();
+        try {
+            BoardDto boardDto = BoardDto.builder()
+                    .title(title)
+                    .build();
+
+            boardService.create(boardDto);
+            response.put("success", true);
+            response.put("message","게시판이 생성 되었습니다.");
+            response.put("boardId",boardDto.getId());
+            return ResponseEntity.ok(response);
+
+        }catch (IllegalArgumentException e){
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * 게시판 수정 API
+     */
+    @PutMapping("/boards/{boardId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateBoard(@PathVariable Long boardId, @RequestParam String title){
+        log.info("Update board - boardId: {}, title: {}", boardId, title);
+
+        Map<String, Object> response = new HashMap<>();
+
+        try{
+            BoardDto boardDto = BoardDto.builder()
+                    .id(boardId)
+                    .title(title)
+                    .build();
+
+            Optional<BoardDto> updated = boardService.update(boardDto);
+
+            if (updated.isPresent()) {
+                response.put("success", true);
+                response.put("message", "게시판이 수정되었습니다.");
+                return ResponseEntity.ok(response);
+            }else {
+                response.put("success", false);
+                response.put("message", "게시판을 찾을 수 없습니다.");
+                return ResponseEntity.badRequest().body(response);
+            }
+        }catch (IllegalArgumentException e){
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * 게시판 삭제 API
+     */
+    @DeleteMapping("/boards/{boardId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> deleteBoard(@PathVariable Long boardId) {
+        log.info("Delete board - boardId: {}", boardId);
+
+        Map<String, Object> response = new HashMap<>();
+
+        boolean deleted = boardService.delete(boardId);
+
+        if (deleted){
+            response.put("success", true);
+            response.put("message", "게시판이 삭제되었습니다.");
+            return ResponseEntity.ok(response);
+        }else{
+            response.put("success", false);
+            response.put("message","게시판을 찾을 수 없습니다.");
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * 게시글 조회 API
+     */
+    @GetMapping("/posts")
+    @ResponseBody
+    public ResponseEntity<Page<PostDto>> getPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Long boardId
+            ) {
+        log.info("Get posts - page: {}, size: {}, boardId: {}", page, size, boardId);
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+
+        Page<PostDto> posts;
+        if (boardId != null) {
+            posts = postService.getList(boardId, pageable);
+        }else{
+            // TODO : postService 에 전체 조회 메서드 추가 필요함
+            posts = postService.getList(boardId, pageable);
+        }
+        return ResponseEntity.ok(posts);
+    }
+
+    /**
+     * 게시글 삭제 (API)
+     */
+    @DeleteMapping("/posts/{postId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> deletePost(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+
+        log.info("Delete post - postId: {}", postId);
+
+        Map<String, Object> response = new HashMap<>();
+
+        Long adminId = null;
+        if (currentUser != null && currentUser.getUser() != null) {
+            adminId = currentUser.getUser().getId();
+        }
+
+        boolean deleted = postService.delete(postId, adminId);
+
+        if (deleted) {
+            response.put("success", true);
+            response.put("message", "게시글이 삭제되었습니다.");
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("success", false);
+            response.put("message", "게시글을 삭제할 수 없습니다.");
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * 전체 댓글 조회 (API)
+     * TODO: CommentService에 전체 조회 메서드 추가 필요
+     */
+    @GetMapping("/comments")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getComments(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        log.info("Get comments - page: {}, size: {}", page, size);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", "전체 댓글 조회 기능은 아직 구현되지 않았습니다.");
+
+        // TODO: CommentService에 전체 조회 메서드 추가 후 구현
+
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/comments/{commentId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> deleteComment(
+            @PathVariable Long commentId,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+
+        log.info("Delete comment - commentId: {}", commentId);
+
+        Map<String, Object> response = new HashMap<>();
+
+        Long adminId = null;
+        if (currentUser != null && currentUser.getUser() != null) {
+            adminId = currentUser.getUser().getId();
+        }
+
+        boolean deleted = commentService.delete(commentId, adminId);
+
+        if (deleted) {
+            response.put("success", true);
+            response.put("message", "댓글이 삭제되었습니다.");
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("success", false);
+            response.put("message", "댓글을 삭제할 수 없습니다.");
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
 
 
 
