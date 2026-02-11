@@ -5,6 +5,7 @@ import com.example.community.domain.comment.CommentEntity;
 import com.example.community.domain.post.PostEntity;
 import com.example.community.persistence.CommentRepository;
 import com.example.community.persistence.PostRepository;
+import com.example.community.persistence.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -22,97 +23,76 @@ public class CommentServiceImpl implements CommentService {
 
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
-
-    /* =====================
-       권한 판단 메서드
-     ===================== */
+    private final UserRepository userRepository;
 
     private boolean isOwner(CommentEntity commentEntity, Long userId) {
         return commentEntity.getUserId().equals(userId);
     }
 
     private boolean isAdmin(Long userId) {
-        // 지금은 관리자 판단 로직이 없으므로 false
-        // 나중에 UserRepository 연결하면 여기만 수정하면 됨
-        return false;
+        return userRepository.findById(userId)
+                .map(u -> u.getRole().name())   // 예: ADMIN / USER (네 UserRole 기준)
+                .map(r -> r.equals("ADMIN"))     // CustomUserDetails에서 ROLE_ 붙여 쓰고 있으니 여기선 name만 비교
+                .orElse(false);
     }
 
-    @Override
-    public Page<CommentDto> getAllComments(Pageable pageable) {
-        log.info("Get all comments - pageable: {}", pageable);
-
-        return commentRepository.findAll(pageable)
-                .map(CommentDto::from);
+    private boolean isUser(Long userId) {
+        return userRepository.findById(userId)
+                .map(u -> u.getRole().name())
+                .map(r -> r.equals("USER"))
+                .orElse(false);
     }
-
-    /* =====================
-       댓글 생성
-     ===================== */
 
     @Override
     public Optional<CommentDto> create(CommentDto commentDto, Long userId) {
-        log.info("create = {}, userId={}", commentDto, userId);
+        if (userId == null) return Optional.empty();
 
-        if (userId == null) {
-            log.info("CREATE DENIED: not logged in");
+        if (isAdmin(userId)) {
+            log.info("CREATE DENIED: admin cannot create comment. userId={}", userId);
+            return Optional.empty();
+        }
+
+        if (!isUser(userId)) {
+            log.info("CREATE DENIED: not a USER. userId={}", userId);
             return Optional.empty();
         }
 
         return postRepository.findById(commentDto.getPostId())
                 .map(postEntity -> {
-                    CommentEntity commentEntity = CommentEntity.builder()
-                            .userId(userId)
-                            .postEntity(postEntity)
-                            .content(commentDto.getContent())
-                            .build();
-
-                    CommentEntity savedEntity = commentRepository.save(commentEntity);
-
-                    return CommentDto.from(savedEntity);
+                    CommentEntity saved = commentRepository.save(
+                            CommentEntity.builder()
+                                    .userId(userId)
+                                    .postEntity(postEntity)
+                                    .content(commentDto.getContent())
+                                    .build()
+                    );
+                    return CommentDto.from(saved);
                 });
     }
 
-    /* =====================
-       댓글 조회 (누구나 가능)
-     ===================== */
-
-    @Override
-    public Optional<CommentDto> read(Long id) {
-        log.info("read = {}", id);
-
-        return commentRepository.findById(id)
-                .map(CommentDto::from);
-    }
-
-    /* =====================
-       댓글 수정 (작성자만)
-     ===================== */
-
     @Override
     public Optional<CommentDto> update(CommentDto commentDto, Long userId) {
-        log.info("update = {}, userId={}", commentDto, userId);
+        if (userId == null) return Optional.empty();
+
+        if (isAdmin(userId)) {
+            log.info("UPDATE DENIED: admin cannot update comment. userId={}", userId);
+            return Optional.empty();
+        }
 
         return commentRepository.findById(commentDto.getId())
                 .filter(comment -> isOwner(comment, userId))
                 .map(comment -> {
                     comment.updateContent(commentDto.getContent());
-                    CommentEntity savedEntity = commentRepository.save(comment);
-                    return CommentDto.from(savedEntity);
+                    return CommentDto.from(commentRepository.save(comment));
                 });
     }
 
-    /* =====================
-       댓글 삭제 (작성자 OR 관리자)
-     ===================== */
-
     @Override
     public boolean delete(Long id, Long userId) {
-        log.info("delete = {}, userId={}", id, userId);
+        if (userId == null) return false;
 
         return commentRepository.findById(id)
-                .filter(comment ->
-                        isOwner(comment, userId) || isAdmin(userId)
-                )
+                .filter(comment -> isOwner(comment, userId) || isAdmin(userId))
                 .map(comment -> {
                     commentRepository.delete(comment);
                     return true;
@@ -120,17 +100,24 @@ public class CommentServiceImpl implements CommentService {
                 .orElse(false);
     }
 
-    /* =====================
-       댓글 목록 조회
-     ===================== */
+    @Override
+    public Optional<CommentDto> read(Long id) {
+        return commentRepository.findById(id)
+                .map(CommentDto::from);
+    }
 
     @Override
     public List<CommentDto> getList(Long postId) {
-        log.info("getList = {}", postId);
-
-        return commentRepository.findByPostEntityId(postId)
-                .stream()
+        return commentRepository.findByPostEntityId(postId).stream()
                 .map(CommentDto::from)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public Page<CommentDto> getAllComments(Pageable pageable) {
+        return commentRepository.findAll(pageable)
+                .map(CommentDto::from);
+    }
+
+
 }
