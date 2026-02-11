@@ -4,7 +4,6 @@ import com.example.community.domain.user.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-
 import java.time.LocalDateTime;
 
 @Getter
@@ -44,7 +43,7 @@ public class MessageEntity {
     private String title;
 
     // 쪽지 내용 조건 : 최대 1000자
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(name = "content", columnDefinition = "TEXT", nullable = false)
     private String content;
 
     // 읽음 여부 : 0 = 읽지않음 1 = 읽음

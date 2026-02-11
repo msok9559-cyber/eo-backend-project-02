@@ -13,13 +13,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@RestController
+@Controller
 @RequestMapping("/messages")
 @RequiredArgsConstructor
 @Slf4j
@@ -35,51 +36,103 @@ public class MessageController {
         if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
             return ((CustomUserDetails) authentication.getPrincipal()).getUsername();
         }
-        return null; // 또는 예외 발생
+        return null;
     }
 
-    // 쪽지 발송
-    @PostMapping
-    public ResponseEntity<String> create(@Valid @RequestBody MessageDto messageDto) {
+    /**
+     * [테스트용 임시 수정] 받은 쪽지함 조회
+     * HTML 파일이 없는 상태에서 테스트하기 위해 @ResponseBody를 추가하여 JSON 데이터를 직접 반환함
+     */
+    @GetMapping("/received")
+    @ResponseBody
+    public ResponseEntity<Page<MessageDto>> receivedPage(@RequestParam(defaultValue = "1") int page) {
+        String username = getCurrentUsername();
+        Pageable pageable = PageRequest.of(page - 1, 10, Sort.by(Sort.Direction.DESC, "id"));
+
+        // 서비스 로직 호출
+        Page<MessageDto> messagePage = messageService.getMessages("received", username, pageable);
+
+        return ResponseEntity.ok(messagePage);
+    }
+
+    /**
+     * 목록 조회 (API)
+     */
+    @GetMapping("/list")
+    @ResponseBody
+    public ResponseEntity<Page<MessageDto>> list(
+            @RequestParam String type,
+            @RequestParam(defaultValue = "1") int page) {
+
+        String username = getCurrentUsername();
+        Pageable pageable = PageRequest.of(page - 1, 10, Sort.by(Sort.Direction.DESC, "id"));
+
+        return ResponseEntity.ok(messageService.getMessages(type, username, pageable));
+    }
+
+    /**
+     * 쪽지 발송 (API)
+     */
+    @PostMapping("/write")
+    @ResponseBody
+    public ResponseEntity<String> write(@Valid @RequestBody MessageDto messageDto) {
         String username = getCurrentUsername();
         messageService.sendMessage(messageDto, username);
-        return ResponseEntity.ok("Message sent successfully");
+        return ResponseEntity.ok("success");
     }
 
-    // 받은 쪽지함 조회
-    @GetMapping("/received")
-    public ResponseEntity<Page<MessageDto>> readReceived(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        String username = getCurrentUsername();
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "id"));
-
-        return ResponseEntity.ok(messageService.getReceivedMessages(username, pageable));
-    }
-
-    // 쪽지 상세 조회
-    @GetMapping("/{id}")
-    public ResponseEntity<MessageDto> read(@PathVariable Long id) {
+    /**
+     * 상세 조회 (API)
+     */
+    @GetMapping("/read")
+    @ResponseBody
+    public ResponseEntity<MessageDto> read(@RequestParam Long id) {
         String username = getCurrentUsername();
         return ResponseEntity.of(messageService.getMessageDetail(id, username));
     }
 
-    // 쪽지 삭제
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
+    /**
+     * 휴지통 이동 (API)
+     */
+    @PostMapping("/trash")
+    @ResponseBody
+    public ResponseEntity<Void> moveToTrash(@RequestParam Long id, @RequestParam String userType) {
         String username = getCurrentUsername();
-        messageService.deleteMessage(id, username);
+        messageService.moveToTrash(id, username, userType);
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * 복구 하기 (API)
+     */
+    @PostMapping("/restore")
+    @ResponseBody
+    public ResponseEntity<Void> restore(@RequestParam Long id, @RequestParam String userType) {
+        String username = getCurrentUsername();
+        messageService.restoreMessage(id, username, userType);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 영구 삭제 (API)
+     */
+    @PostMapping("/delete")
+    @ResponseBody
+    public ResponseEntity<Void> delete(@RequestParam Long id, @RequestParam String userType) {
+        String username = getCurrentUsername();
+        messageService.permanentDelete(id, username, userType);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 유효성 검사 예외 처리
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseBody
     public ResponseEntity<?> handleValidationExceptions(MethodArgumentNotValidException e) {
         Map<String, String> errors = new HashMap<>();
-
         e.getBindingResult().getFieldErrors().forEach(fieldError ->
                 errors.put(fieldError.getField(), fieldError.getDefaultMessage()));
-
         return ResponseEntity.badRequest().body(errors);
     }
 }

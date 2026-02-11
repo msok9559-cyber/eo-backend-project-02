@@ -26,10 +26,10 @@
             <h5 class="mb-4 fw-bold" th:text="${#authentication.name} + ' 의 쪽지함'">사용자 의 쪽지함</h5>
             <div class="nav flex-column nav-pills">
                 <a class="nav-link active" th:href="@{/messages/received}">
-                    📥 전체 쪽지함 <span class="badge badge-count rounded-pill" th:text="${unreadCount}">24</span>
+                    전체 쪽지함 <span class="badge badge-count rounded-pill" th:text="${unreadCount}">24</span>
                 </a>
-                <a class="nav-link" th:href="@{/messages/write}">📝 쪽지 보내기</a>
-                <a class="nav-link" th:href="@{/messages/sent}">📤 보낸 쪽지함</a>
+                <a class="nav-link" th:href="@{/messages/write}">쪽지 보내기</a>
+                <a class="nav-link" th:href="@{/messages/sent}">보낸 쪽지함</a>
                 <hr>
                 <a class="nav-link text-danger" th:href="@{/messages/trash}">🗑️ 휴지통</a>
             </div>

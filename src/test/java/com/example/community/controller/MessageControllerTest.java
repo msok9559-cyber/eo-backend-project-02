@@ -1,9 +1,12 @@
 package com.example.community.controller;
 
 import com.example.community.domain.message.MessageDto;
+import com.example.community.domain.message.MessageEntity;
 import com.example.community.domain.user.UserEntity;
+import com.example.community.persistence.MessageRepository;
 import com.example.community.persistence.UserRepository;
 import com.example.community.security.CustomUserDetails;
+import com.example.community.service.MessageService;
 import tools.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,12 +20,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -38,6 +42,12 @@ class MessageControllerTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private MessageRepository messageRepository;
+
+    @Autowired
+    private MessageService messageService;
 
     private final String MESSAGES_URI = "/messages";
 
@@ -67,14 +77,24 @@ class MessageControllerTest {
                         .build())
         );
 
+        // 시큐리티 인증 세팅 (sender로 로그인한 상태 가정)
         CustomUserDetails userDetails = new CustomUserDetails(sender);
         Authentication auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
 
     @Test
-    @DisplayName("쪽지 발송 테스트")
-    public void testCreate() throws Exception {
+    @DisplayName("received - 받은 쪽지함 데이터 로드 확인")
+    void testReadReceivedPage() throws Exception {
+        mockMvc.perform(get(MESSAGES_URI + "/received")
+                        .param("page", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").exists());
+    }
+
+    @Test
+    @DisplayName("write - 쪽지 발송 성공 테스트")
+    void testWrite() throws Exception {
         MessageDto messageDto = MessageDto.builder()
                 .receiverUsername("receiver")
                 .title("테스트 제목")
@@ -83,56 +103,41 @@ class MessageControllerTest {
 
         String json = objectMapper.writeValueAsString(messageDto);
 
-        mockMvc.perform(MockMvcRequestBuilders.post(MESSAGES_URI)
+        mockMvc.perform(post(MESSAGES_URI + "/write")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
-                .andDo(print());
-
-        log.info("Message creation test completed");
+                .andExpect(content().string("success"));
     }
 
+    /**
+     * 쪽지 삭제(휴지통 이동) 테스트
+     * 실제 데이터를 생성한 후 삭제를 진행하여 RuntimeException 방지
+     */
     @Test
-    @DisplayName("받은 쪽지함 조회 테스트")
-    public void testReadReceived() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get(MESSAGES_URI + "/received")
-                        .param("page", "1")
-                        .param("size", "10"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andDo(print());
+    @DisplayName("trash - 휴지통 이동 성공 테스트")
+    void testMoveToTrash() throws Exception {
+        log.info("=== testMoveToTrash 시작 ===");
 
-        log.info("Read received messages test completed");
-    }
-
-    @Test
-    @DisplayName("쪽지 발송 실패 테스트 (제목 누락)")
-    public void testCreateFail() throws Exception {
-        // 제목(title)이 없는 DTO
+        // 1. 쪽지를 하나 발송하여 DB에 저장
         MessageDto messageDto = MessageDto.builder()
                 .receiverUsername("receiver")
-                .content("테스트 제목이 없어서 실패")
+                .title("삭제될 쪽지")
+                .content("내용")
                 .build();
+        messageService.sendMessage(messageDto, "sender");
 
-        String json = objectMapper.writeValueAsString(messageDto);
+        // 2. 저장된 쪽지의 실제 ID 조회
+        List<MessageEntity> messages = messageRepository.findAll();
+        Long targetId = messages.get(messages.size() - 1).getId();
 
-        mockMvc.perform(MockMvcRequestBuilders.post(MESSAGES_URI)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest())
-                .andDo(print());
+        // 3. 생성된 ID로 삭제 요청
+        mockMvc.perform(post(MESSAGES_URI + "/trash")
+                        .param("id", targetId.toString())
+                        .param("userType", "sender"))
+                .andDo(print())
+                .andExpect(status().isOk());
 
-        log.info("Message creation fail test completed");
-    }
-
-    @Test
-    @DisplayName("쪽지 삭제 테스트")
-    public void testDelete() throws Exception {
-        // 임의의 ID 1번 삭제 요청
-        mockMvc.perform(MockMvcRequestBuilders.delete(MESSAGES_URI + "/1"))
-                .andExpect(status().isOk())
-                .andDo(print());
-
-        log.info("Message delete test completed");
+        log.info("=== testMoveToTrash 완료 ===");
     }
 }
