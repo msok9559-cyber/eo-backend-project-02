@@ -1,10 +1,12 @@
 package com.example.community.controller;
 
+import com.example.community.domain.board.BoardDto;
 import com.example.community.domain.post.Criteria;
 import com.example.community.domain.post.Pagination;
 import com.example.community.domain.post.PostDto;
 import com.example.community.domain.post.ResultDto;
 import com.example.community.security.CustomUserDetails;
+import com.example.community.service.BoardService;
 import com.example.community.service.PostService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,17 +20,45 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
+
 @Controller
 @RequestMapping("/board/{boardId}/post")
 @Slf4j
 @RequiredArgsConstructor
 public class PostController {
     private final PostService postService;
+    private final BoardService boardService;
 
     // 게시글 목록
     @GetMapping({"", "/list" })
     public String list(@PathVariable Long boardId, Criteria criteria, Model model) {
         log.info("List boardId = {}, list={}", boardId, criteria);
+
+        // 1) 전체 게시판 조회
+        List<BoardDto> allBoards = boardService.getList();
+
+        // 2) 공지 카테고리 / 일반 게시판 분리
+        List<BoardDto> noticeBoardList = allBoards.stream()
+                .filter(b -> "NOTICE".equals(b.getCategory()))
+                .toList();
+
+        List<BoardDto> boardList = allBoards.stream()
+                .filter(b -> b.getCategory() == null || !"NOTICE".equals(b.getCategory()))
+                .toList();
+
+        model.addAttribute("noticeBoardList", noticeBoardList);
+        model.addAttribute("boardList", boardList);
+
+        // 3) 메인 가운데 공지 영역 (최신 5개)
+        if (!noticeBoardList.isEmpty()) {
+            Long noticeBoardId = noticeBoardList.get(0).getId();
+            Pageable noticePageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "id"));
+            var noticePage = postService.getList(noticeBoardId, noticePageable);
+            model.addAttribute("noticeList", noticePage.getContent());
+        } else {
+            model.addAttribute("noticeList", List.of());
+        }
 
         Pageable pageable = PageRequest.of(criteria.getPage() - 1,
                 criteria.getSize(), Sort.by(Sort.Direction.DESC, "fixed")
@@ -36,7 +66,13 @@ public class PostController {
 
         log.info("pageable = {}", pageable);
 
-        Page<PostDto> postPage = postService.getList(boardId, pageable);
+        Page<PostDto> postPage;
+        // 키워드가 있는지 확인
+        if (criteria.getKeyword() != null && !criteria.getKeyword().trim().isEmpty()) {
+            postPage = postService.searchPostsInBoard(boardId, criteria.getSearchType(), criteria.getKeyword(), pageable);
+        } else {
+            postPage = postService.getList(boardId, pageable);
+        }
 
         Pagination pagination = Pagination.of( pageable, postPage.getTotalElements(), postPage.getTotalPages());
 
@@ -46,6 +82,11 @@ public class PostController {
         model.addAttribute("postPage", postPage);
         model.addAttribute("pagination", pagination);
         model.addAttribute("criteria", criteria);
+
+        // 5) 인기 게시글 TOP 10 (오른쪽 사이드바용)
+        Pageable popularPageable = PageRequest.of(0, 10);
+        Page<PostDto> popularPosts = postService.getPopularPosts(popularPageable);
+        model.addAttribute("popularPosts", popularPosts.getContent());
 
         return "post/list";
     }

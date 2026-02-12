@@ -34,4 +34,16 @@ public interface PostRepository extends JpaRepository<PostEntity, Long> {
     // 조회수 TOP 10 (인기 게시글)
     @Query("SELECT p FROM PostEntity p ORDER BY p.viewCount DESC")
     Page<PostEntity> findTopByViewCount(Pageable pageable);
+
+    @Query("SELECT p FROM PostEntity p WHERE p.boardId = :boardId AND (" +
+            "(:searchType = 'title' AND p.title LIKE %:keyword%) OR " +
+            "(:searchType = 'content' AND p.content LIKE %:keyword%) OR " +
+            "(:searchType = 'writer' AND p.userId IN (SELECT u.id FROM UserEntity u WHERE u.nickname LIKE %:keyword%)) OR " +
+            "(:searchType = 'titleContent' AND (p.title LIKE %:keyword% OR p.content LIKE %:keyword%)) OR " +
+            "(:searchType = '' AND (p.title LIKE %:keyword% OR p.content LIKE %:keyword%)))")
+    Page<PostEntity> findByBoardIdAndSearchType(
+            @Param("boardId") Long boardId,
+            @Param("searchType") String searchType,
+            @Param("keyword") String keyword,
+            Pageable pageable);
 }

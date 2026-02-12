@@ -193,4 +193,14 @@ public class PostServiceImpl implements PostService {
 
         return PostDto.from(postEntity, nickname);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PostDto> searchPostsInBoard(Long boardId, String searchType, String keyword, Pageable pageable) {
+        log.info("SEARCH IN BOARD: boardId={}, searchType={}, keyword={}", boardId, searchType, keyword);
+
+        Page<PostEntity> entities = postRepository.findByBoardIdAndSearchType(boardId, searchType, keyword, pageable);
+
+        return entities.map(this::convertToDto);
+    }
 }
