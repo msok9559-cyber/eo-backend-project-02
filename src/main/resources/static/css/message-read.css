@@ -1,0 +1,57 @@
+#messageDetail {
+    margin-top: 20px;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+#messageDetail > .infoSection {
+    background: #f9f9f9;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+#messageDetail > .infoSection > .infoRow {
+    display: flex;
+    margin-bottom: 8px;
+}
+
+#messageDetail > .infoSection > .infoRow > label {
+    width: 100px;
+    color: #888;
+    font-weight: bold;
+}
+
+#messageDetail > .contentSection {
+    padding: 30px;
+    min-height: 200px;
+}
+
+#messageDetail > .contentSection > h3 {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+#messageDetail > .contentSection > #detailBody {
+    line-height: 1.6;
+    color: #444;
+    white-space: pre-wrap; /* 줄바꿈 유지 */
+}
+
+#messageDetail > .detailActions {
+    padding: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    background: #fff;
+}
+
+.btnDanger {
+    background: #ff4d4f;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+}

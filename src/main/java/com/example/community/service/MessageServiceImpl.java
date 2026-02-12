@@ -22,53 +22,71 @@ public class MessageServiceImpl implements MessageService {
 
     /**
      * 쪽지 발송
-     * 발신자 아이디를 로그인 사용자 ID로 저장하며 초기 상태값 설정
+     * 수신자 아이디(username)가 아닌 닉네임(nickname)으로 유저를 조회하여 발송
      */
     @Override
     @Transactional
     public void sendMessage(MessageDto messageDto, String senderUsername) {
+        // 1. 발신자(나) 조회
         UserEntity sender = userRepository.findByUsername(senderUsername)
-                .orElseThrow(() -> new RuntimeException("발신자를 찾을 수 없습니다."));
-        UserEntity receiver = userRepository.findByUsername(messageDto.getReceiverUsername())
-                .orElseThrow(() -> new RuntimeException("수신자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException("발신자 정보를 찾을 수 없습니다."));
 
+        // 2. 수신자 조회 (닉네임 기준)
+        UserEntity receiver = userRepository.findByNickname(messageDto.getReceiverNickname())
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 닉네임입니다."));
+
+        // 3. 자기 자신에게 보내기 방지
+        if (sender.getUsername().equals(receiver.getUsername())) {
+            throw new RuntimeException("자기 자신에게는 쪽지를 보낼 수 없습니다.");
+        }
+
+        // 4. 엔티티 빌드 및 저장
         MessageEntity message = MessageEntity.builder()
                 .sender(sender)
                 .receiver(receiver)
                 .title(messageDto.getTitle())
                 .content(messageDto.getContent())
                 .build();
+
         messageRepository.save(message);
     }
 
     /**
      * 목록 조회
-     * type(수신/발신/휴지통)에 따른 조건별 최신순 조회
+     * type(received/sent/trash/all)에 따른 조건별 최신순 조회
      */
     @Override
     public Page<MessageDto> getMessages(String type, String username, Pageable pageable) {
         UserEntity user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
-        if ("수신".equals(type)) {
-            return messageRepository.findByReceiverAndReceiverDeleteState(user, 0, pageable).map(MessageDto::from);
-        } else if ("발신".equals(type)) {
-            return messageRepository.findBySenderAndSenderDeleteState(user, 0, pageable).map(MessageDto::from);
-        } else if ("휴지통".equals(type)) {
-            return messageRepository.findTrashMessages(user, pageable).map(MessageDto::from);
+        if ("received".equals(type)) {
+            // 받은 쪽지함: 수신자가 나이고 삭제되지 않은 상태
+            return messageRepository.findByReceiverAndReceiverDeleteState(user, 0, pageable)
+                    .map(m -> MessageDto.from(m, username));
+        } else if ("sent".equals(type)) {
+            // 보낸 쪽지함: 발신자가 나이고 삭제되지 않은 상태
+            return messageRepository.findBySenderAndSenderDeleteState(user, 0, pageable)
+                    .map(m -> MessageDto.from(m, username));
+        } else if ("trash".equals(type)) {
+            // 휴지통: 수신 혹은 발신 중 하나라도 삭제 상태가 1인 경우
+            return messageRepository.findTrashMessages(user, pageable)
+                    .map(m -> MessageDto.from(m, username));
+        } else {
+            // 전체 쪽지함(all): 보낸 쪽지와 받은 쪽지 모두 포함 (deleteState가 0인 것들)
+            return messageRepository.findAllMessages(user, pageable)
+                    .map(m -> MessageDto.from(m, username));
         }
-        return Page.empty();
     }
 
     /**
-     * 쪽지 상세 조회
-     * 수신자가 조회할 때만 읽음 처리(is_read=1)를 수행함
+     * 쪽지 상세 보기 (수신자일 경우 읽음 처리 포함)
      */
     @Override
     @Transactional
     public Optional<MessageDto> getMessageDetail(Long id, String username) {
         return messageRepository.findById(id).map(message -> {
-            // 권한 체크
+            // 권한 체크: 발신자나 수신자가 아니면 조회 불가
             if (!message.getSender().getUsername().equals(username) &&
                     !message.getReceiver().getUsername().equals(username)) {
                 throw new RuntimeException("조회 권한이 없습니다.");
@@ -77,13 +95,13 @@ public class MessageServiceImpl implements MessageService {
             if (message.getReceiver().getUsername().equals(username)) {
                 message.markAsRead();
             }
-            return MessageDto.from(message);
+            return MessageDto.from(message, username);
         });
     }
 
     /**
      * 휴지통 이동
-     * 실제 삭제하지 않고 상태값만 1로 업데이트
+     * 발신자/수신자 삭제 상태 업데이트
      */
     @Override
     @Transactional
@@ -91,7 +109,8 @@ public class MessageServiceImpl implements MessageService {
         MessageEntity message = messageRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("쪽지를 찾을 수 없습니다."));
 
-        if ("발신".equals(userType)) {
+        // 내가 보낸 쪽지 리스트에서 삭제를 눌렀을 때와 받은 리스트에서 눌렀을 때 구분
+        if ("sent".equals(userType)) {
             message.updateSenderDeleteState(1);
         } else {
             message.updateReceiverDeleteState(1);
@@ -99,8 +118,7 @@ public class MessageServiceImpl implements MessageService {
     }
 
     /**
-     * 복구 하기
-     * 휴지통 상태(1)를 유지 상태(0)로 변경
+     * 쪽지 복구 하기
      */
     @Override
     @Transactional
@@ -108,7 +126,7 @@ public class MessageServiceImpl implements MessageService {
         MessageEntity message = messageRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("쪽지를 찾을 수 없습니다."));
 
-        if ("발신".equals(userType)) {
+        if ("sent".equals(userType)) {
             message.updateSenderDeleteState(0);
         } else {
             message.updateReceiverDeleteState(0);
@@ -116,8 +134,7 @@ public class MessageServiceImpl implements MessageService {
     }
 
     /**
-     * 영구 삭제
-     * 상태를 2로 변경하고, 양측 모두 2일 경우에만 물리적 DELETE 수행
+     * 쪽지 영구 삭제 (양측 모두 삭제 시 물리 삭제)
      */
     @Override
     @Transactional
@@ -125,13 +142,13 @@ public class MessageServiceImpl implements MessageService {
         MessageEntity message = messageRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("쪽지를 찾을 수 없습니다."));
 
-        if ("발신".equals(userType)) {
+        if ("sent".equals(userType)) {
             message.updateSenderDeleteState(2);
         } else {
             message.updateReceiverDeleteState(2);
         }
 
-        // 양측 사용자 모두 영구 삭제를 요청한 경우 DB에서 실제 삭제
+        // 양측 사용자 모두 영구 삭제(state=2)를 요청한 경우 DB에서 실제 데이터 삭제
         if (message.getSenderDeleteState() == 2 && message.getReceiverDeleteState() == 2) {
             messageRepository.delete(message);
         }

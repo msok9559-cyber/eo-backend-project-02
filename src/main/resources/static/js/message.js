@@ -1,108 +1,73 @@
-document.addEventListener('DOMContentLoaded', () => {
-
-    const messageList = document.getElementById('messageList');
-    const checkAll = document.getElementById('checkAll');
-    const deleteButton = document.getElementById('deleteButton');
-
-    /**
-     * 1. 실시간 안 읽은 쪽지 수 업데이트
-     * unread-count 필요 시 추가
-     */
-    const updateUnreadCount = () => {
-        fetch('/messages/api/unread-count') // 경로 규칙에 맞춰 /api 추가
-            .then(response => response.ok ? response.json() : 0)
-            .then(count => {
-                const badge = document.querySelector('.unreadBadge');
-                if (badge) badge.textContent = count;
-            })
-            .catch(error => console.error('Count update error:', error));
-    };
-
-    /**
-     * 2. 쪽지 행 클릭 시 상세 페이지 이동 (이벤트 위임)
-     */
-    if (messageList) {
-        messageList.addEventListener('click', (event) => {
-            const currentRow = event.target.closest('.messageRow');
-
-            if (!currentRow || event.target.type === 'checkbox' || event.target.tagName === 'BUTTON') {
+/**
+ * [2026-02-12] 쪽지 목록 기능 스크립트
+ * - 목록 선택, 상세보기 이동, 대량 삭제(일반/영구) 처리
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. 행 클릭 시 상세보기 이동 (체크박스 클릭 시 제외)
+    const messageRows = document.querySelectorAll('.messageRow');
+    messageRows.forEach(row => {
+        row.addEventListener('click', function(e) {
+            if (e.target.classList.contains('rowCheck') || e.target.type === 'checkbox') {
                 return;
             }
+            const messageId = this.getAttribute('data-id');
+            const pathParts = window.location.pathname.split('/');
+            const currentType = pathParts[pathParts.length - 1] || 'all';
 
-            const messageId = currentRow.dataset.id;
-            if (messageId) {
-                // /api/read 주소와 매칭
-                // 현재는 API 호출 데이터를 가져옴
-                // 만약 상세 화면 페이지로 이동하고 싶다면 별도의 뷰 매핑이 필요
-                location.href = `/messages/api/read?id=${messageId}`;
-            }
+            location.href = `/messages/read?id=${messageId}&type=${currentType}`;
         });
-    }
+    });
 
-    /**
-     * 3. 전체 선택 로직
-     */
+    // 2. 전체 선택 체크박스 로직
+    const checkAll = document.getElementById('checkAll');
+    const rowChecks = document.querySelectorAll('.rowCheck');
     if (checkAll) {
-        checkAll.addEventListener('change', () => {
-            const rowChecks = document.querySelectorAll('.rowCheck');
-            rowChecks.forEach(checkbox => {
-                checkbox.checked = checkAll.checked;
-            });
+        checkAll.addEventListener('change', function() {
+            rowChecks.forEach(cb => cb.checked = this.checked);
         });
     }
 
-    /**
-     * 4. 선택 삭제 (Bulk Delete) 기능
-     */
-    if (deleteButton) {
-        deleteButton.addEventListener('click', () => {
-            const selectedChecks = document.querySelectorAll('.rowCheck:checked');
+    // 3. 선택 삭제 로직 (Bulk Delete/Trash)
+    const deleteBtn = document.getElementById('deleteButton');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function() {
+            const checkedBoxes = document.querySelectorAll('.rowCheck:checked');
+            const selectedIds = Array.from(checkedBoxes)
+                .map(cb => cb.closest('.messageRow').getAttribute('data-id'));
 
-            if (selectedChecks.length === 0) {
+            if (selectedIds.length === 0) {
                 alert('삭제할 쪽지를 선택해주세요.');
                 return;
             }
 
-            if (confirm('선택한 쪽지를 삭제하시겠습니까?')) {
-                const idsToDelete = Array.from(selectedChecks).map(cb =>
-                    // 숫자로 변환하여 전송
-                    Number(cb.closest('.messageRow').dataset.id)
-                );
+            // 현재 위치가 휴지통인지 확인
+            const isTrashPage = window.location.pathname.includes('/trash');
+            const confirmMsg = isTrashPage ?
+                `선택한 ${selectedIds.length}개의 쪽지를 영구 삭제하시겠습니까?` :
+                `선택한 ${selectedIds.length}개의 쪽지를 삭제하시겠습니까?`;
 
-                fetch('/messages/api/delete/bulk', {
+            if (confirm(confirmMsg)) {
+                // 컨트롤러에 추가한 /bulk 경로 호출
+                const endpoint = isTrashPage ? '/messages/api/delete/bulk' : '/messages/api/trash/bulk';
+
+                fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ids: idsToDelete })
+                    body: JSON.stringify({ ids: selectedIds })
                 })
-                    .then(response => {
-                        if (response.ok) {
-                            alert('삭제 처리되었습니다.');
+                    .then(res => {
+                        if (res.ok) {
+                            alert('삭제되었습니다.');
                             location.reload();
                         } else {
-                            alert('삭제 중 오류가 발생했습니다.');
+                            alert('삭제 처리에 실패했습니다. (API 경로 및 컨트롤러를 확인하세요)');
                         }
                     })
-                    .catch(error => console.error('Delete error:', error));
+                    .catch(err => {
+                        console.error('Bulk Delete error:', err);
+                        alert('오류가 발생했습니다.');
+                    });
             }
         });
     }
-
-    /**
-     * 5. 개별 복구(Restore) 기능
-     * 컨트롤러 @PostMapping("/api/restore")와 매칭
-     */
-    window.restoreMessage = (id, userType) => {
-        if (confirm('이 쪽지를 복구하시겠습니까?')) {
-            // URL 파라미터로 전달
-            fetch(`/messages/api/restore?id=${id}&userType=${userType}`, {
-                method: 'POST'
-            })
-                .then(response => {
-                    if (response.ok) {
-                        alert('복구되었습니다.');
-                        location.href = '/messages/all';
-                    }
-                });
-        }
-    };
 });

@@ -65,7 +65,9 @@ class MessageServiceTest {
         messageService.sendMessage(dto, sender.getUsername());
 
         // 2. 수신함 조회
-        Page<MessageDto> received = messageService.getMessages("수신", receiver.getUsername(), PageRequest.of(0, 10));
+        Page<MessageDto> received = messageService
+                .getMessages("수신", receiver.getUsername(), PageRequest.of(0, 10));
+
         assertThat(received.getContent()).isNotEmpty();
         assertThat(received.getContent().get(0).getSenderUsername()).isEqualTo(sender.getUsername());
 
@@ -76,7 +78,7 @@ class MessageServiceTest {
     }
 
     @Test
-    @DisplayName("쪽지 휴지통 이동 및 복구 프로세스 테스트")
+    @DisplayName("쪽지 휴지통 이동 및 복구 테스트")
     void messageTrashRestoreTest() {
         // 1. 초기 쪽지 생성
         MessageDto dto = MessageDto.builder()

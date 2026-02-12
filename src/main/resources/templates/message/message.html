@@ -13,19 +13,19 @@
     <nav id="sideMenu">
         <h1 th:text="${#authentication.name} + '의 쪽지함'">사용자</h1>
         <ul>
-            <li><a th:href="@{/messages/all}" class="menuItem active">전체 쪽지함</a></li>
-            <li><a th:href="@{/messages/received}" class="menuItem">받은쪽지함</a></li>
-            <li><a th:href="@{/messages/sent}" class="menuItem">보낸쪽지함</a></li>
+            <li><a th:href="@{/messages/all}" class="menuItem" th:classappend="${currentType == 'all'} ? 'active'">전체 쪽지함</a></li>
+            <li><a th:href="@{/messages/received}" class="menuItem" th:classappend="${currentType == 'received'} ? 'active'">받은 쪽지함</a></li>
+            <li><a th:href="@{/messages/sent}" class="menuItem" th:classappend="${currentType == 'sent'} ? 'active'">보낸 쪽지함</a></li>
             <li><a th:href="@{/messages/write}" class="menuItem">쪽지쓰기</a></li>
             <li id="menuDivider"></li>
-            <li><a th:href="@{/messages/trash}" class="menuItem trashMenu">휴지통</a></li>
+            <li><a th:href="@{/messages/trash}" class="menuItem trashMenu" th:classappend="${currentType == 'trash'} ? 'active'">휴지통</a></li>
         </ul>
     </nav>
 
     <main id="mainContent">
         <section id="messageBoard">
             <header>
-                <h2>전체 쪽지함</h2>
+                <h2 th:text="${currentType == 'trash' ? '휴지통' : '쪽지함'}">전체 쪽지함</h2>
                 <button type="button" id="deleteButton">선택 삭제</button>
             </header>
 
@@ -38,8 +38,13 @@
                     <div class="dateCell">날짜</div>
                 </div>
 
-                <div th:each="msg : ${messages.content}" class="messageRow" th:data-id="${msg.id}">
-                    <div class="checkCell"><input type="checkbox" class="rowCheck"></div>
+                <div th:each="msg : ${messages.content}"
+                     class="messageRow"
+                     th:classappend="${msg.type == 'RECEIVED' && msg.isRead == 0} ? 'unread' : ''"
+                     th:data-id="${msg.id}">
+                    <div class="checkCell">
+                        <input type="checkbox" class="rowCheck">
+                    </div>
                     <div class="typeCell">
                         <span th:class="${msg.type == 'RECEIVED' ? 'tagReceived' : 'tagSent'}"
                               th:text="${msg.type == 'RECEIVED' ? '받음' : '보냄'}">구분</span>
@@ -56,21 +61,20 @@
 
             <nav id="pageNavigation" th:if="${messages.totalPages > 0}">
                 <div id="pagination">
-                    <a th:href="@{/messages/all(page=${messages.number})}"
+                    <a th:href="@{/messages/{type}(type=${currentType}, page=${messages.number})}"
                        th:classappend="${!messages.hasPrevious} ? 'disabled'">&laquo;</a>
 
                     <a th:each="pageIdx : ${#numbers.sequence(1, messages.totalPages)}"
-                       th:href="@{/messages/all(page=${pageIdx})}"
+                       th:href="@{/messages/{type}(type=${currentType}, page=${pageIdx})}"
                        th:text="${pageIdx}"
                        th:classappend="${pageIdx == messages.number + 1} ? 'current'">1</a>
 
-                    <a th:href="@{/messages/all(page=${messages.number + 2})}"
+                    <a th:href="@{/messages/{type}(type=${currentType}, page=${messages.number + 2})}"
                        th:classappend="${!messages.hasNext} ? 'disabled'">&raquo;</a>
                 </div>
             </nav>
         </section>
     </main>
 </div>
-
 </body>
 </html>

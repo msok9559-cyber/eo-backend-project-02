@@ -95,3 +95,9 @@
 /* 상태 태그 */
 .tagReceived { color: #28a745; border: 1px solid #28a745; padding: 2px 6px; border-radius: 4px; }
 .tagSent { color: #007bff; border: 1px solid #007bff; padding: 2px 6px; border-radius: 4px; }
+
+/* 메시지 읽음 읽지 않음 처리 */
+.messageRow.unread > .titleCell { font-weight: bold; color: #000; }
+.messageRow.unread > .titleCell::before {
+    content: '●'; color: #ff4d4d; margin-right: 5px; font-size: 10px; vertical-align: middle;
+}

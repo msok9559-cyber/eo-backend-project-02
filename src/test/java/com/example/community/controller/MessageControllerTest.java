@@ -54,6 +54,7 @@ class MessageControllerTest {
 
     @BeforeEach
     void setUp() {
+        // 발신자(나) 생성
         UserEntity sender = userRepository.findByUsername("sender").orElseGet(() ->
                 userRepository.save(UserEntity.builder()
                         .username("sender")
@@ -65,6 +66,7 @@ class MessageControllerTest {
                         .build())
         );
 
+        // 수신자(상대방) 생성
         userRepository.findByUsername("receiver").orElseGet(() ->
                 userRepository.save(UserEntity.builder()
                         .username("receiver")
@@ -76,63 +78,68 @@ class MessageControllerTest {
                         .build())
         );
 
+        // Security Context에 발신자 정보 주입
         CustomUserDetails userDetails = new CustomUserDetails(sender);
         Authentication auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
 
     @Test
-    @DisplayName("all - 전체 쪽지함 페이지 뷰 및 모델 검증")
-    void testAllMessagesPage() throws Exception {
-        log.info("testAllMessagesPage");
-        // /all, /received, /sent 등 모든 GET 요청은 View를 반환
+    @DisplayName("전체/받은/보낸 쪽지함 페이지 뷰 반환 테스트")
+    void testListPages() throws Exception {
+        // /messages/all, /received, /sent 경로 테스트
         mockMvc.perform(get(MESSAGES_URI + "/received"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("message/message"))
-                .andExpect(model().attributeExists("messages"));
-        log.info(" testAllMessagesPage");
+                .andExpect(model().attributeExists("messages"))
+                .andExpect(model().attribute("currentType", "received"));
     }
 
     @Test
-    @DisplayName("api/list - 받은 쪽지함 데이터 로드 확인")
-    void testReadReceivedData() throws Exception {
-        log.info("testReadReceivedData");
-        // JSON 데이터를 받는 경로는 /api/list 임을 검증
-        mockMvc.perform(get(API_URI + "/list")
-                        .param("type", "received")
-                        .param("page", "1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").exists());
-        log.info("testReadReceivedData");
-    }
-
-    @Test
-    @DisplayName("api/write - 쪽지 발송 성공 테스트")
-    void testWrite() throws Exception {
-        log.info("testWrite 시작");
+    @DisplayName("api/write - 닉네임 기반 쪽지 발송 성공 테스트")
+    void testWriteByNickname() throws Exception {
+        // 중요: receiverUsername 대신 receiverNickname을 사용해야 함
         MessageDto messageDto = MessageDto.builder()
-                .receiverUsername("receiver")
+                .receiverNickname("받는사람")
                 .title("테스트 제목")
                 .content("테스트 내용")
                 .build();
 
         String json = objectMapper.writeValueAsString(messageDto);
 
-        // POST경로 - /api/write로 변경
         mockMvc.perform(post(API_URI + "/write")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
                 .andExpect(content().string("success"));
-        log.info("testWrite");
     }
 
     @Test
-    @DisplayName("api/trash - 휴지통 이동 성공 테스트")
-    void testMoveToTrash() throws Exception {
-        log.info("testMoveToTrash");
+    @DisplayName("api/read - 쪽지 상세 데이터(JSON) 조회 테스트")
+    void testGetMessageDetailApi() throws Exception {
+        // 테스트용 쪽지 생성 (서비스 로직 활용)
         MessageDto messageDto = MessageDto.builder()
-                .receiverUsername("receiver")
+                .receiverNickname("받는사람")
+                .title("상세조회용")
+                .content("상세내용")
+                .build();
+        messageService.sendMessage(messageDto, "sender");
+
+        List<MessageEntity> messages = messageRepository.findAll();
+        Long targetId = messages.get(messages.size() - 1).getId();
+
+        mockMvc.perform(get(API_URI + "/read")
+                        .param("id", targetId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("상세조회용"))
+                .andExpect(jsonPath("$.content").value("상세내용"));
+    }
+
+    @Test
+    @DisplayName("api/trash - 휴지통 이동 테스트")
+    void testMoveToTrash() throws Exception {
+        MessageDto messageDto = MessageDto.builder()
+                .receiverNickname("받는사람")
                 .title("삭제될 쪽지")
                 .content("내용")
                 .build();
@@ -141,23 +148,18 @@ class MessageControllerTest {
         List<MessageEntity> messages = messageRepository.findAll();
         Long targetId = messages.get(messages.size() - 1).getId();
 
-        //API 경로 /api/trash 로 변경
         mockMvc.perform(post(API_URI + "/trash")
                         .param("id", targetId.toString())
-                        .param("userType", "sender"))
-                .andDo(print())
+                        .param("userType", "sent")) // 내가 보낸 쪽지함에서 삭제
                 .andExpect(status().isOk());
-        log.info("testMoveToTrash");
     }
 
     @Test
-    @DisplayName("api/restore - 쪽지 복구 성공 테스트")
+    @DisplayName("api/restore - 쪽지 복구 테스트")
     void testRestore() throws Exception {
-        log.info("testRestore");
-
         MessageDto messageDto = MessageDto.builder()
-                .receiverUsername("receiver")
-                .title("복구 테스트 쪽지")
+                .receiverNickname("받는사람")
+                .title("복구 테스트")
                 .content("내용")
                 .build();
         messageService.sendMessage(messageDto, "sender");
@@ -165,12 +167,28 @@ class MessageControllerTest {
         List<MessageEntity> messages = messageRepository.findAll();
         Long targetId = messages.get(messages.size() - 1).getId();
 
-        // API 경로 /api/restore 로 변경
         mockMvc.perform(post(API_URI + "/restore")
                         .param("id", targetId.toString())
-                        .param("userType", "sender"))
+                        .param("userType", "sent"))
                 .andExpect(status().isOk());
+    }
 
-        log.info("testRestore");
+    @Test
+    @DisplayName("api/delete - 영구 삭제 테스트")
+    void testPermanentDelete() throws Exception {
+        MessageDto messageDto = MessageDto.builder()
+                .receiverNickname("받는사람")
+                .title("영구삭제 테스트")
+                .content("내용")
+                .build();
+        messageService.sendMessage(messageDto, "sender");
+
+        List<MessageEntity> messages = messageRepository.findAll();
+        Long targetId = messages.get(messages.size() - 1).getId();
+
+        mockMvc.perform(post(API_URI + "/delete")
+                        .param("id", targetId.toString())
+                        .param("userType", "sent"))
+                .andExpect(status().isOk());
     }
 }

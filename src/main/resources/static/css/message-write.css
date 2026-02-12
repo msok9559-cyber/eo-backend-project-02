@@ -1,0 +1,74 @@
+/* 쪽지 작성 폼 레이아웃 */
+#writeForm {
+    margin-top: 20px;
+}
+
+#writeForm > .inputRow {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 라벨 텍스트 스타일 */
+#writeForm > .inputRow > label {
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #444;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* label 안의 span 스타일 */
+#writeForm > .inputRow > label > span {
+    font-size: 14px;
+}
+
+/* 실제 입력창 스타일 */
+#writeForm > .inputRow > label > input,
+#writeForm > .inputRow > label > span > textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+#writeForm > .inputRow > label > span > textarea {
+    resize: none;
+    display: block;
+}
+
+/* 하단 버튼 영역 */
+#writeForm > .formActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+#writeForm > .formActions > .btnPrimary {
+    background: #6f42c1;
+    color: #fff;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+#writeForm > .formActions > .btnPrimary:hover {
+    background: #5a32a3;
+}
+
+#writeForm > .formActions > .btnSecondary {
+    background: #eee;
+    color: #444;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    cursor: pointer;
+}

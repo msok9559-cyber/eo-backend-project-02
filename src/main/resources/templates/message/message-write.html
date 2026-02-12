@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>쪽지 쓰기 - 커뮤니티</title>
+    <link rel="stylesheet" href="/css/reset.css">
+    <link rel="stylesheet" href="/css/message.css">
+    <link rel="stylesheet" href="/css/message-write.css">
+    <script src="/js/message-write.js" defer></script>
+</head>
+<body class="popupBody">
+<div id="messengerWrapper">
+    <nav id="sideMenu">
+        <h1 th:text="${#authentication.name} + '의 쪽지함'">사용자</h1>
+        <ul>
+            <li><a th:href="@{/messages/all}" class="menuItem">전체 쪽지함</a></li>
+            <li><a th:href="@{/messages/received}" class="menuItem">받은 쪽지함</a></li>
+            <li><a th:href="@{/messages/sent}" class="menuItem">보낸 쪽지함</a></li>
+            <li><a th:href="@{/messages/write}" class="menuItem active">쪽지쓰기</a></li>
+            <li id="menuDivider"></li>
+            <li><a th:href="@{/messages/trash}" class="menuItem trashMenu">휴지통</a></li>
+        </ul>
+    </nav>
+
+    <main id="mainContent">
+        <section id="messageBoard">
+            <header>
+                <h2>쪽지 보내기</h2>
+            </header>
+            <form id="writeForm">
+                <p class="inputRow">
+                    <label>
+                        <span>받는 사람 (닉네임)</span>
+                        <input type="text" id="receiverNickname" name="receiverNickname"
+                               th:value="${param.target}" placeholder="상대방 닉네임을 입력하세요" required>
+                    </label>
+                </p>
+                <p class="inputRow">
+                    <label>
+                        <span>제목</span>
+                        <input type="text" id="title" name="title" placeholder="제목을 입력하세요" required>
+                    </label>
+                </p>
+                <p class="inputRow">
+                    <label>
+                        <span>내용</span>
+                        <span><textarea id="content" name="content" rows="10" placeholder="내용을 입력하세요" required></textarea></span>
+                    </label>
+                </p>
+                <div class="formActions">
+                    <button type="button" class="btnSecondary" onclick="history.back()">취소</button>
+                    <button type="submit" class="btnPrimary">보내기</button>
+                </div>
+            </form>
+        </section>
+    </main>
+</div>
+</body>
+</html>

@@ -10,21 +10,28 @@ import org.springframework.data.repository.query.Param;
 
 public interface MessageRepository extends JpaRepository<MessageEntity, Long> {
 
-    // 1. 받은 쪽지함 조회 (기존 유지)
+    // 1. 받은 쪽지함 조회
     Page<MessageEntity> findByReceiverAndReceiverDeleteState(UserEntity receiver, Integer deleteState, Pageable pageable);
 
-    // 2. 보낸 쪽지함 조회 (기존 유지)
+    // 2. 보낸 쪽지함 조회
     Page<MessageEntity> findBySenderAndSenderDeleteState(UserEntity sender, Integer deleteState, Pageable pageable);
 
     /**
      * 3. 휴지통 조회
-     * 수신자이면서 수신자삭제상태가 1이거나, 발신자이면서 발신자삭제상태가 1인 경우 조회
      */
     @Query("SELECT m FROM MessageEntity m WHERE " +
             "(m.receiver = :user AND m.receiverDeleteState = 1) OR " +
             "(m.sender = :user AND m.senderDeleteState = 1)")
     Page<MessageEntity> findTrashMessages(@Param("user") UserEntity user, Pageable pageable);
 
-    // 4. 읽지 않은 쪽지 개수 (기존 유지)
+    /**
+     * 4. 전체 쪽지함 조회 (보낸 것 + 받은 것 통합)
+     */
+    @Query("SELECT m FROM MessageEntity m WHERE " +
+            "(m.receiver = :user AND m.receiverDeleteState = 0) OR " +
+            "(m.sender = :user AND m.senderDeleteState = 0)")
+    Page<MessageEntity> findAllMessages(@Param("user") UserEntity user, Pageable pageable);
+
+    // 5. 읽지 않은 쪽지 개수
     long countByReceiverAndIsReadAndReceiverDeleteState(UserEntity receiver, Integer isRead, Integer receiverDeleteState);
 }

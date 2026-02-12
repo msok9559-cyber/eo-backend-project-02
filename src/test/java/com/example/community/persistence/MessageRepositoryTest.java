@@ -53,68 +53,118 @@ class MessageRepositoryTest {
         userRepository.save(receiver);
     }
 
-    // 1. 쪽지 생성 및 기본 조회 테스트
     @Test
-    @DisplayName("쪽지 저장 및 수신함 조회 테스트")
-    void testSaveAndFindReceived() {
+    @DisplayName("받은 쪽지함 및 보낸 쪽지함 기본 조회 테스트")
+    void testSaveAndFindBasic() {
         MessageEntity message = MessageEntity.builder()
                 .sender(sender)
                 .receiver(receiver)
-                .title("testTitle")
-                .content("testContent")
+                .title("안녕하세요")
+                .content("내용입니다")
                 .build();
-
         messageRepository.save(message);
 
-        Page<MessageEntity> result = messageRepository.findByReceiverAndReceiverDeleteState(receiver, 0, PageRequest.of(0, 10));
+        // 수신자 기준 조회 (deleteState 0: 정상)
+        Page<MessageEntity> received = messageRepository
+                .findByReceiverAndReceiverDeleteState(receiver, 0, PageRequest.of(0, 10));
+        // 발신자 기준 조회 (deleteState 0: 정상)
+        Page<MessageEntity> sent = messageRepository
+                .findBySenderAndSenderDeleteState(sender, 0, PageRequest.of(0, 10));
 
-        assertThat(result.getContent()).isNotEmpty();
-        assertThat(result.getContent().get(0).getTitle()).isEqualTo("테스트 제목");
-        log.info("저장된 쪽지 제목: {}", result.getContent().get(0).getTitle());
+        //
+        assertThat(received.getContent()).isNotEmpty();
+        assertThat(received.getContent().get(0).getTitle()).isEqualTo("안녕하세요");
+        assertThat(sent.getContent()).isNotEmpty();
+        log.info("기본 송수신 조회 성공");
     }
 
-    // 2. 휴지통 조회 테스트
     @Test
-    @DisplayName("휴지통 메시지 통합 조회 테스트")
+    @DisplayName("휴지통 메시지 통합 조회(@Query) 테스트")
     void testFindTrashMessages() {
-        // 발신자가 휴지통 보냄
+        // 내가 보낸 쪽지인데 내가 삭제(휴지통)한 경우
         MessageEntity msg1 = MessageEntity.builder()
                 .sender(sender).receiver(receiver).title("발신자삭제").content("내용")
                 .build();
-        msg1.updateSenderDeleteState(1);
+        msg1.updateSenderDeleteState(1); // 1: 휴지통
         messageRepository.save(msg1);
 
-        // 수신자가 휴지통 보냄
+        // 내가 받은 쪽지인데 내가 삭제(휴지통)한 경우
         MessageEntity msg2 = MessageEntity.builder()
                 .sender(receiver).receiver(sender).title("수신자삭제").content("내용")
                 .build();
-        msg2.updateReceiverDeleteState(1);
+        msg2.updateReceiverDeleteState(1); // 1: 휴지통
         messageRepository.save(msg2);
 
-        // sender 기준 휴지통 조회 (본인이 발신자이면서 삭제했거나, 수신자이면서 삭제한 것 모두 포함)
+        // sender 기준 휴지통 조회 (본인이 발신자이든 수신자이든 상태가 1인 것 모두)
         Page<MessageEntity> trashPage = messageRepository.findTrashMessages(sender, PageRequest.of(0, 10));
 
         assertThat(trashPage.getTotalElements()).isEqualTo(2);
-        log.info("휴지통 내 메시지 개수: {}", trashPage.getTotalElements());
+        log.info("휴지통 통합 조회 성공: {}건", trashPage.getTotalElements());
     }
 
-    // 3. 상태 업데이트 및 물리 삭제 테스트
     @Test
-    @DisplayName("읽음 처리 및 영구 삭제 로직 테스트")
-    void testStatusAndHardDelete() {
+    @DisplayName("전체 쪽지함 통합 조회(@Query) 테스트")
+    void testFindAllMessages() {
+        // 보낸 쪽지 1개, 받은 쪽지 1개 저장 (삭제 상태 0)
+        messageRepository.save(MessageEntity.builder().
+                sender(sender)
+                .receiver(receiver)
+                .title("보낸쪽지")
+                .content("내용")
+                .build());
+        messageRepository.save(MessageEntity.builder()
+                .sender(receiver)
+                .receiver(sender)
+                .title("받은쪽지")
+                .content("내용")
+                .build());
+
+        // sender 기준 전체 조회 (보낸 것 + 받은 것 중 정상 상태)
+        Page<MessageEntity> allPage = messageRepository
+                .findAllMessages(sender, PageRequest.of(0, 10));
+
+        assertThat(allPage.getTotalElements()).isEqualTo(2);
+        log.info("전체 쪽지함 통합 조회 성공: {}건", allPage.getTotalElements());
+    }
+
+    @Test
+    @DisplayName("읽지 않은 쪽지 개수 카운트 테스트")
+    void testCountUnreadMessages() {
+        // 빌더에서 isRead(0)를 호출하지 않음 (엔티티 생성자에서 자동으로 0 세팅)
+        messageRepository.save(MessageEntity.builder()
+                .sender(sender)
+                .receiver(receiver)
+                .title("제목1")
+                .content("내용")
+                .build());
+        messageRepository.save(MessageEntity.builder()
+                .sender(sender)
+                .receiver(receiver)
+                .title("제목2")
+                .content("내용")
+                .build());
+
+        // 읽지 않은(0), 정상상태(0)인 쪽지 카운트
+        long unreadCount = messageRepository.countByReceiverAndIsReadAndReceiverDeleteState(receiver, 0, 0);
+
+
+        assertThat(unreadCount).isEqualTo(2);
+        log.info("읽지 않은 쪽지 개수: {}", unreadCount);
+    }
+
+    @Test
+    @DisplayName("영구 삭제(물리 삭제) 조건 검증 테스트")
+    void testPhysicalDeleteCondition() {
         MessageEntity message = messageRepository.save(
-                MessageEntity.builder().sender(sender).receiver(receiver).title("삭제용").content("내용").build()
+                MessageEntity.builder().sender(sender).receiver(receiver).title("영구삭제용").content("내용").build()
         );
 
-        // 읽음 처리 확인
-        message.markAsRead();
-        messageRepository.saveAndFlush(message);
-        assertThat(messageRepository.findById(message.getId()).get().getIsRead()).isEqualTo(1);
-
-        // 영구 삭제 조건 테스트 (양측 모두 2일 때)
+        // 양측 모두 영구 삭제 상태(2)로 변경
         message.updateSenderDeleteState(2);
         message.updateReceiverDeleteState(2);
+        messageRepository.saveAndFlush(message);
 
+        // 양측 상태가 2일 때만 delete 수행
         if (message.getSenderDeleteState() == 2 && message.getReceiverDeleteState() == 2) {
             messageRepository.delete(message);
         }

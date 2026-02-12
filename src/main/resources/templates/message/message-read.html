@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>쪽지 읽기 - 커뮤니티</title>
+    <link rel="stylesheet" href="/css/reset.css">
+    <link rel="stylesheet" href="/css/message.css">
+    <link rel="stylesheet" href="/css/message-read.css">
+    <script src="/js/message-read.js" defer></script>
+</head>
+<body class="popupBody">
+<div id="messengerWrapper">
+    <nav id="sideMenu">
+        <h1 th:text="${#authentication.name} + '의 쪽지함'">사용자</h1>
+        <ul>
+            <li><a th:href="@{/messages/all}" class="menuItem">전체 쪽지함</a></li>
+            <li><a th:href="@{/messages/received}" class="menuItem">받은쪽지함</a></li>
+            <li><a th:href="@{/messages/sent}" class="menuItem">보낸쪽지함</a></li>
+            <li><a th:href="@{/messages/write}" class="menuItem">쪽지쓰기</a></li>
+            <li id="menuDivider"></li>
+            <li><a th:href="@{/messages/trash}" class="menuItem trashMenu">휴지통</a></li>
+        </ul>
+    </nav>
+
+    <main id="mainContent">
+        <section id="messageBoard">
+            <header>
+                <h2 id="viewTitle">쪽지 내용</h2>
+                <div class="headerActions">
+                    <button type="button" class="btnSecondary" onclick="history.back()">목록으로</button>
+                </div>
+            </header>
+
+            <article id="messageDetail">
+                <div class="infoSection">
+                    <p class="infoRow">
+                        <label>보낸 사람</label>
+                        <span id="senderName">-</span>
+                    </p>
+                    <p class="infoRow">
+                        <label>받은 사람</label>
+                        <span id="receiverName">-</span>
+                    </p>
+                    <p class="infoRow">
+                        <label>날짜</label>
+                        <span id="sendDate">-</span>
+                    </p>
+                    <p class="infoRow" id="readDateRow" style="display: none;">
+                        <label>읽은 시간</label>
+                        <span id="readDate">-</span>
+                    </p>
+                </div>
+
+                <div class="contentSection">
+                    <h3 id="detailSubject">제목 로딩 중...</h3>
+                    <div id="detailBody">내용을 불러오고 있습니다.</div>
+                </div>
+
+                <div class="detailActions">
+                    <button type="button" id="replyBtn" class="btnPrimary">답장하기</button>
+                    <button type="button" id="trashBtn" class="btnDanger">삭제</button>
+                </div>
+            </article>
+        </section>
+    </main>
+</div>
+</body>
+</html>
