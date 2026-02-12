@@ -68,4 +68,8 @@ public interface PostService {
      * @return 인기 게시글 페이지
      */
     Page<PostDto> getPopularPosts(Pageable pageable);
+
+    Page<PostDto> searchPostsInBoard(Long boardId, String searchType, String keyword, Pageable pageable);
+
+
 }

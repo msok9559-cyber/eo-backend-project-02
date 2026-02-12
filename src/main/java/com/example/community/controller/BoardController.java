@@ -26,7 +26,7 @@ public class BoardController {
     public String list(Model model) {
         log.info("Accessing Board List...");
         model.addAttribute("boardList", boardService.getList());
-        return "board/list";
+        return "index";
     }
 
     /**
