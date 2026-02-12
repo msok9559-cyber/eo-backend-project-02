@@ -22,14 +22,16 @@ public class CommentDto {
     @Size(min = 1, max = 200, message = "내용은 1자 이상 200자 이하로 작성해 주셔야 합니다.")
     private String content;
 
+
     private String writer;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+
     private Integer commentsCount;
 
-    // 정적 팩토리 메서드(static factory method)
+    // 기존 from (writer는 비어있음)
     public static CommentDto from(@NotNull CommentEntity commentEntity) {
         return CommentDto.builder()
                 .id(commentEntity.getId())
@@ -42,11 +44,15 @@ public class CommentDto {
                 .build();
     }
 
+    public static CommentDto from(@NotNull CommentEntity commentEntity, String writer) {
+        CommentDto dto = from(commentEntity);
+        dto.setWriter(writer);
+        return dto;
+    }
+
     /**
-     * CommentDto 인스턴스를 CommentEntity 인스턴스로 변환
-     *
-     * @param postsEntity CommentEntity 인스턴스가 참조하는 PostEntity 인스턴스
-     * @return CommentEntity 인스턴스
+     * CommentDto -> CommentEntity
+     * userId는 Service에서 직접 세팅할거라 여기서는 안 넣어도 됨
      */
     public CommentEntity toEntity(PostEntity postsEntity) {
         return CommentEntity.builder()

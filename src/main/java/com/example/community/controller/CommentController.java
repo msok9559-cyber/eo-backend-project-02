@@ -6,6 +6,7 @@ import com.example.community.service.CommentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,100 +25,86 @@ public class CommentController {
 
     private final CommentService commentService;
 
-
     @PostMapping
-    public ResponseEntity<CommentDto> create(
+    public ResponseEntity<?> create(
             @PathVariable Long postId,
             @Valid @RequestBody CommentDto commentDto
     ) {
         Long userId = getCurrentUserId();
         commentDto.setPostId(postId);
 
-        return ResponseEntity.of(
-                commentService.create(commentDto, userId)
-        );
+        return commentService.create(commentDto, userId)
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(403).body("댓글 작성 권한이 없습니다."));
     }
 
-    /* =====================
-       댓글 단건 조회
-     ===================== */
     @GetMapping("/{commentId}")
     public ResponseEntity<CommentDto> read(
             @PathVariable Long postId,
             @PathVariable Long commentId
     ) {
-        return ResponseEntity.of(
-                commentService.read(commentId)
-        );
+        return commentService.read(commentId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-
     @PutMapping("/{commentId}")
-    public ResponseEntity<CommentDto> update(
+    public ResponseEntity<?> update(
             @PathVariable Long postId,
             @PathVariable Long commentId,
             @Valid @RequestBody CommentDto commentDto
     ) {
         Long userId = getCurrentUserId();
-
         commentDto.setId(commentId);
         commentDto.setPostId(postId);
 
-        return ResponseEntity.of(
-                commentService.update(commentDto, userId)
-        );
+        return commentService.update(commentDto, userId)
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(403).body("댓글 수정 권한이 없습니다."));
     }
 
     @DeleteMapping("/{commentId}")
-    public ResponseEntity<Void> delete(
+    public ResponseEntity<Map<String, Object>> delete(
             @PathVariable Long postId,
             @PathVariable Long commentId
     ) {
         Long userId = getCurrentUserId();
 
-        boolean deleted = commentService.delete(commentId, userId);
+        Map<String, Object> response = new HashMap<>();
 
-        if (!deleted) {
-            return ResponseEntity.notFound().build(); // 또는 403
+        boolean delete =  commentService.delete(commentId, userId);
+
+        if (!delete) {
+            response.put("success", false);
+            response.put("message", "권한이 없습니다.");
+
+            return ResponseEntity.status(403).body(response);
         }
 
-        return ResponseEntity.ok().build();
+        response.put("success", true);
+        response.put("message", "삭제되었습니다");
+        return ResponseEntity.ok(response);
     }
-
 
     @GetMapping
     public ResponseEntity<List<CommentDto>> readAll(
             @PathVariable Long postId
     ) {
-        return ResponseEntity.ok(
-                commentService.getList(postId)
-        );
+        return ResponseEntity.ok(commentService.getList(postId));
     }
 
-    /* =====================
-       Validation 예외 처리
-     ===================== */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(
             MethodArgumentNotValidException e
     ) {
         Map<String, String> errors = new HashMap<>();
-
-        e.getBindingResult()
-                .getFieldErrors()
-                .forEach(error ->
-                        errors.put(error.getField(), error.getDefaultMessage())
-                );
-
+        e.getBindingResult().getFieldErrors()
+                .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
         return ResponseEntity.badRequest().body(errors);
     }
 
-    /* =====================
-       Security 사용자 추출
-     ===================== */
     private Long getCurrentUserId() {
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new IllegalStateException("인증 정보가 없습니다.");

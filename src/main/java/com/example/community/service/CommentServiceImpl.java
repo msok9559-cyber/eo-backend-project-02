@@ -2,7 +2,6 @@ package com.example.community.service;
 
 import com.example.community.domain.comment.CommentDto;
 import com.example.community.domain.comment.CommentEntity;
-import com.example.community.domain.post.PostEntity;
 import com.example.community.persistence.CommentRepository;
 import com.example.community.persistence.PostRepository;
 import com.example.community.persistence.UserRepository;
@@ -31,8 +30,8 @@ public class CommentServiceImpl implements CommentService {
 
     private boolean isAdmin(Long userId) {
         return userRepository.findById(userId)
-                .map(u -> u.getRole().name())   // 예: ADMIN / USER (네 UserRole 기준)
-                .map(r -> r.equals("ADMIN"))     // CustomUserDetails에서 ROLE_ 붙여 쓰고 있으니 여기선 name만 비교
+                .map(u -> u.getRole().name())   // ADMIN / USER
+                .map(r -> r.equals("ADMIN"))
                 .orElse(false);
     }
 
@@ -41,6 +40,18 @@ public class CommentServiceImpl implements CommentService {
                 .map(u -> u.getRole().name())
                 .map(r -> r.equals("USER"))
                 .orElse(false);
+    }
+
+
+    private String getNickname(Long userId) {
+        return userRepository.findById(userId)
+                .map(u -> u.getNickname())
+                .orElse("unknown");
+    }
+
+    private CommentDto convertToDto(CommentEntity comment) {
+        String nickname = getNickname(comment.getUserId());
+        return CommentDto.from(comment, nickname);
     }
 
     @Override
@@ -66,7 +77,7 @@ public class CommentServiceImpl implements CommentService {
                                     .content(commentDto.getContent())
                                     .build()
                     );
-                    return CommentDto.from(saved);
+                    return convertToDto(saved);
                 });
     }
 
@@ -83,7 +94,8 @@ public class CommentServiceImpl implements CommentService {
                 .filter(comment -> isOwner(comment, userId))
                 .map(comment -> {
                     comment.updateContent(commentDto.getContent());
-                    return CommentDto.from(commentRepository.save(comment));
+                    CommentEntity saved = commentRepository.save(comment);
+                    return convertToDto(saved);
                 });
     }
 
@@ -103,21 +115,20 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public Optional<CommentDto> read(Long id) {
         return commentRepository.findById(id)
-                .map(CommentDto::from);
+                .map(this::convertToDto);
     }
 
     @Override
     public List<CommentDto> getList(Long postId) {
+        // 정렬 메서드 추가했으면 그걸로 바꿔도 됨
         return commentRepository.findByPostEntityId(postId).stream()
-                .map(CommentDto::from)
+                .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public Page<CommentDto> getAllComments(Pageable pageable) {
         return commentRepository.findAll(pageable)
-                .map(CommentDto::from);
+                .map(this::convertToDto);
     }
-
-
 }

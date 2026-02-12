@@ -158,7 +158,7 @@
                     <td th:text="${post.views}">123</td>
                 </tr>
 
-                <tr th:if="${postPage != null && !tempPosts}" th:each="post, stat : ${postPage.content}">
+                <tr th:if="${postPage != null && !postPage.isEmpty()}" th:each="post, stat : ${postPage.content}">
                     <td th:text="${postPage.totalElements - (postPage.number * postPage.size) - stat.index}">1</td>
                     <td class="title">
                         <a th:href="@{/board/{boardId}/post/read(boardId=${post.boardId}, id=${post.id})}"
