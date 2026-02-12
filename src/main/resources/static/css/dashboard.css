@@ -1,0 +1,362 @@
+
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* Header */
+#header {
+    background: white;
+    padding: 10px 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#logo {
+    height: 60px;
+}
+
+/* Banner */
+#banner {
+    width: 100%;
+    height: 180px;
+    background: linear-gradient(135deg, #87CEEB 0%, #98D8C8 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+#banner-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+#banner-title {
+    font-size: 48px;
+    font-weight: 700;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Container */
+#container {
+    display: flex;
+    max-width: 1400px;
+    margin: 20px auto;
+    gap: 20px;
+    padding: 0 20px;
+}
+
+/* Sidebar */
+#sidebar {
+    width: 200px;
+    flex-shrink: 0;
+}
+
+#menu-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+#menu-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #5B87DE;
+}
+
+#menu-list > div {
+    padding: 10px 12px;
+    margin: 5px 0;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+    font-size: 14px;
+    color: #555;
+}
+
+#menu-list > div:hover {
+    background: #f0f4ff;
+    color: #5B87DE;
+}
+
+#menu-users.active,
+#menu-boards.active,
+#menu-posts.active,
+#menu-comments.active,
+#menu-reports.active {
+    background: #5B87DE;
+    color: white;
+}
+
+/* Main Content */
+#main-content {
+    flex: 1;
+    background: white;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    min-height: 600px;
+}
+
+#main-content > section {
+    display: none;
+}
+
+#main-content > section.active {
+    display: block;
+}
+
+#users-header,
+#boards-header,
+#posts-header,
+#comments-header,
+#reports-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #eee;
+}
+
+#users-header > h2,
+#boards-header > h2,
+#posts-header > h2,
+#comments-header > h2,
+#reports-header > h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+}
+
+/* Buttons */
+button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+#board-add-btn,
+#board-save-btn {
+    background: #5B87DE;
+    color: white;
+}
+
+#board-add-btn:hover,
+#board-save-btn:hover {
+    background: #4a70c8;
+}
+
+#board-cancel-btn {
+    background: #e0e0e0;
+    color: #333;
+}
+
+#board-cancel-btn:hover {
+    background: #d0d0d0;
+}
+
+#logout-btn {
+    width: 100%;
+    padding: 10px;
+    background: #ff4444;
+    color: white;
+}
+
+#logout-btn:hover {
+    background: #cc0000;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th {
+    background: #f8f9fa;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #dee2e6;
+}
+
+td {
+    padding: 12px;
+    border-bottom: 1px solid #dee2e6;
+    color: #555;
+}
+
+tr:hover {
+    background: #f8f9fa;
+}
+
+#users-tbody > tr > td,
+#boards-tbody > tr > td,
+#posts-tbody > tr > td,
+#comments-tbody > tr > td {
+    text-align: center;
+}
+
+/* Pagination */
+#users-pagination,
+#posts-pagination,
+#comments-pagination {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 30px;
+}
+
+#users-pagination > button,
+#posts-pagination > button,
+#comments-pagination > button {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+#users-pagination > button:hover,
+#posts-pagination > button:hover,
+#comments-pagination > button:hover {
+    background: #5B87DE;
+    color: white;
+    border-color: #5B87DE;
+}
+
+#users-pagination > button.active,
+#posts-pagination > button.active,
+#comments-pagination > button.active {
+    background: #5B87DE;
+    color: white;
+    border-color: #5B87DE;
+}
+
+/* Right Panel */
+#right-panel {
+    width: 250px;
+    flex-shrink: 0;
+}
+
+#admin-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+#admin-profile {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #5B87DE;
+    margin: 0 auto 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 32px;
+    font-weight: 700;
+}
+
+#admin-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+#admin-role {
+    font-size: 14px;
+    color: #5B87DE;
+    margin-bottom: 15px;
+}
+
+/* Empty State */
+#reports-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+/* Modal */
+#board-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+#board-modal.active {
+    display: flex;
+}
+
+#board-modal-content {
+    background: white;
+    border-radius: 8px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+}
+
+#board-modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+#board-form {
+    margin-bottom: 15px;
+}
+
+#board-form > label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #333;
+}
+
+#board-title-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+#board-title-input:focus {
+    outline: none;
+    border-color: #5B87DE;
+}
+
+#board-modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+/* Badges - inline 스타일로 추가 필요 */
