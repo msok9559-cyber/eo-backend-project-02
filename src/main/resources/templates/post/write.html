@@ -1,51 +1,310 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title th:text="${title}"></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>글쓰기</title>
+
+    <link rel="stylesheet" href="/css/index.css">
+    <script src="/js/index.js" defer></script>
+
+    <!-- CSRF(만약 Security에서 csrf 활성화라면 필요) -->
+    <meta name="_csrf" th:content="${_csrf?.token}">
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}">
+
     <style>
-        #container { width: 800px; }
-        #container > form > p > label { display: block; }
-        #container > form > p > label > span { display: block; }
-        #container > form > p > label > input[type="text"],
-        #container > form > p > label > textarea {
-            display: block; width: 100%; box-sizing: border-box; font: 1em sans-serif;
+        #main-content .write-box{
+            background:#fff;
+            border:1px solid #e0e0e0;
+            border-radius:8px;
+            padding:26px;
         }
-        #container > form > p > label > textarea { line-height: 1.5; height: 15em; }
+
+        #main-content .write-title{
+            font-size:20px;
+            font-weight:bold;
+            color:#333;
+            margin-bottom:16px;
+        }
+
+        #main-content .write-meta{
+            display:flex;
+            gap:12px;
+            align-items:center;
+            font-size:13px;
+            color:#666;
+            padding:10px 0 14px;
+            border-top:2px solid #333;
+            border-bottom:1px solid #ddd;
+            margin-bottom:18px;
+        }
+
+        #main-content .form-row{
+            margin-bottom:14px;
+        }
+
+        #main-content label{
+            display:block;
+            font-weight:bold;
+            font-size:14px;
+            color:#333;
+            margin-bottom:6px;
+        }
+
+        #main-content input[type="text"]{
+            width:100%;
+            padding:10px 12px;
+            border:1px solid #ddd;
+            border-radius:6px;
+            font-size:14px;
+        }
+
+        #main-content textarea{
+            width:100%;
+            min-height:280px;
+            padding:12px;
+            border:1px solid #ddd;
+            border-radius:6px;
+            font-size:14px;
+            line-height:1.7;
+            resize:vertical;
+        }
+
+        #main-content .help{
+            margin-top:8px;
+            font-size:12px;
+            color:#888;
+        }
+
+        #main-content .btn{
+            padding:10px 14px;
+            border-radius:4px;
+            border:1px solid #ddd;
+            background:#fff;
+            cursor:pointer;
+            font-weight:bold;
+            font-size:14px;
+            text-decoration:none;
+            color:#333;
+            display:inline-block;
+        }
+        #main-content .btn:hover{ background:#f0f0f0; }
+
+        #main-content .btn-primary{
+            background:#667eea;
+            color:#fff;
+            border-color:#667eea;
+        }
+        #main-content .btn-primary:hover{ background:#5568d3; }
+
+        #main-content .actions{
+            display:flex;
+            justify-content:flex-end;
+            gap:10px;
+            margin-top:18px;
+        }
+
+        #main-content .error-text{
+            margin-top:10px;
+            color:#dc3545;
+            font-size:13px;
+            display:none;
+        }
     </style>
 </head>
+
 <body>
+<div id="wrapper">
 
-<div id="container">
-    <h1 th:text="${title}"></h1>
 
-    <form th:action="@{${action}}" method="post" th:object="${postDto}">
-        <input type="hidden" name="id" th:value="*{id}" th:if="${postDto}">
-        <input type="hidden" name="page" th:value="${criteria.page}" th:if="${criteria}">
-        <input type="hidden" name="size" th:value="${criteria.size}" th:if="${criteria}">
-        <p>
-            <label>
-                <span>Title:</span>
-                <input type="text" name="title" th:value="${postDto} ? *{title}">
-            </label>
-        </p>
-        <p>
-            <label>
-                <span>Writer:</span>
-                <input type="text" name="writer" th:value="${postDto} ? *{writer}">
-            </label>
-        </p>
-        <p>
-            <label>
-                <span>Content:</span>
-                <textarea name="content" th:text="${postDto} ? *{content}"></textarea>
-            </label>
-        </p>
-        <p>
-            <input type="submit" th:value="${#strings.capitalize(action)}">
-        </p>
-    </form>
+    <header id="header">
+        <div id="logo">
+            <a th:href="@{/}">
+                <img src="/images/logo.png" alt="로고">
+            </a>
+        </div>
+        <div id="banner"></div>
+    </header>
+
+    <div id="main-layout">
+
+        <aside id="left-sidebar">
+            <div class="sidebar-section">
+                <h3>
+                    공지사항
+                    <a th:href="@{/admin/board/create(category='NOTICE')}"
+                       class="add-board-btn"
+                       aria-label="공지사항 추가"
+                       sec:authorize="hasRole('ADMIN')">
+                        <span>공지 카테고리 추가</span>
+                    </a>
+                </h3>
+                <ul class="sidebar-menu">
+                    <li th:each="board : ${noticeBoardList}">
+                        <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
+                           th:text="${board.title}">공지 카테고리</a>
+                    </li>
+
+                    <li th:if="${noticeBoardList == null || #lists.isEmpty(noticeBoardList)}">
+                        <span>등록된 공지 카테고리가 없습니다.</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <h3> 게시판
+                    <a th:href="@{/admin/board/create}"
+                       class="add-board-btn"
+                       aria-label="게시판 추가"
+                       sec:authorize="hasRole('ADMIN')">
+                        <span>게시판 추가</span>
+                    </a>
+                </h3>
+                <ul class="sidebar-menu">
+                    <th:block th:each="board : ${boardList}">
+                        <li>
+                            <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
+                               th:text="${board.title}">게시판</a>
+                        </li>
+                    </th:block>
+                </ul>
+            </div>
+        </aside>
+
+
+        <main id="main-content">
+
+            <div class="write-box">
+                <div class="write-title">글쓰기</div>
+
+                <!-- 작성자 표시만(입력 X) -->
+                <div class="write-meta">
+                    <span><strong>작성자:</strong>
+                        <span sec:authentication="name">사용자</span>
+                    </span>
+                </div>
+
+
+                <form id="writeForm"
+                      th:action="@{/board/{boardId}/post/write(boardId=${boardId})}"
+                      method="post"
+                      sec:authorize="isAuthenticated()">
+
+                    <div class="form-row">
+                        <label for="title">제목</label>
+                        <input id="title" type="text" name="title" maxlength="100"
+                               placeholder="제목을 입력하세요 (1~100자)" required>
+                    </div>
+
+                    <div class="form-row">
+                        <label for="content">내용</label>
+                        <textarea id="content" name="content" maxlength="5000"
+                                  placeholder="내용을 입력하세요 (1~5000자)" required></textarea>
+                        <div class="help">※ 작성자는 로그인 사용자로 자동 저장됩니다.</div>
+                    </div>
+
+                    <div class="error-text" id="formError"></div>
+
+                    <div class="actions">
+                        <a class="btn"
+                           th:href="@{/board/{boardId}/post/list(boardId=${boardId})}">
+                            취소
+                        </a>
+                        <button type="submit" class="btn btn-primary">등록</button>
+                    </div>
+                </form>
+
+                <!-- 비로그인 안내 -->
+                <div class="empty-message" sec:authorize="isAnonymous()">
+                    글을 작성하려면 로그인하세요.
+                </div>
+            </div>
+
+        </main>
+
+        <aside id="right-sidebar">
+
+            <div id="auth-box" sec:authorize="!isAuthenticated()">
+                <h3>로그인</h3>
+                <form th:action="@{/login}" method="post">
+                    <input type="text" name="username" placeholder="아이디" required>
+                    <input type="password" name="password" placeholder="비밀번호" required>
+                    <button type="submit">로그인</button>
+                </form>
+                <div class="auth-links">
+                    <a th:href="@{/signup}">회원가입</a>
+                    <a th:href="@{/find-password}">ID/PW 찾기</a>
+                </div>
+            </div>
+
+            <div id="auth-box2" sec:authorize="isAuthenticated()">
+                <div class="user-info">
+                    <p><span sec:authentication="name">사용자</span>님</p>
+                    <div class="profile-links">
+                        <a th:href="@{/mypage}">마이페이지</a>
+                        <a th:href="@{/messages}">쪽지함</a>
+                        <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/dashboard}">관리자</a>
+                        <form th:action="@{/logout}" method="post" onsubmit="return confirmLogout();">
+                            <button type="submit">로그아웃</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="ranking-section">
+                <h3>인기 게시글</h3>
+                <ul class="ranking-list">
+                    <li class="ranking-item">
+                        <span class="ranking-number">1</span>
+                        <a href="#" title="인기 게시글 제목입니다">인기 게시글 제목입니다</a>
+                        <span class="ranking-views">1.2k</span>
+                    </li>
+                </ul>
+            </div>
+
+        </aside>
+    </div>
+
+    <footer id="footer">
+        <p><strong>백엔드 개발자 양성과정 2차 프로젝트</strong></p>
+        <p>Community Platform © 2026 All rights reserved.</p>
+    </footer>
+
 </div>
+
+<script>
+    // 간단 프론트 검증(선택)
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('writeForm');
+        if (!form) return;
+
+        const title = document.getElementById('title');
+        const content = document.getElementById('content');
+        const err = document.getElementById('formError');
+
+        form.addEventListener('submit', (e) => {
+            err.style.display = 'none';
+            err.textContent = '';
+
+            const t = title.value.trim();
+            const c = content.value.trim();
+
+            if (t.length < 1 || t.length > 100) {
+                e.preventDefault();
+                err.style.display = 'block';
+                err.textContent = '제목은 1~100자여야 합니다.';
+                return;
+            }
+            if (c.length < 1 || c.length > 5000) {
+                e.preventDefault();
+                err.style.display = 'block';
+                err.textContent = '내용은 1~5000자여야 합니다.';
+                return;
+            }
+        });
+    });
+</script>
 
 </body>
 </html>

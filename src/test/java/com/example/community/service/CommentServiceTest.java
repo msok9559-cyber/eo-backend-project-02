@@ -67,7 +67,7 @@ class CommentServiceTest {
        댓글 생성 테스트
      ===================== */
     @Test
-    void testCreate() {
+    public void testCreate() {
         CommentDto dto = CommentDto.builder()
                 .postId(postId)
                 .content("안녕하세요")
@@ -81,7 +81,7 @@ class CommentServiceTest {
     }
 
     @Test
-    void testCreateFail() {
+    public void testCreateFail() {
         CommentDto dto = CommentDto.builder()
                 .postId(postId)
                 .content("댓글 생성 실패")
@@ -96,7 +96,7 @@ class CommentServiceTest {
        댓글 조회 테스트
      ===================== */
     @Test
-    void testRead() {
+    public void testRead() {
         CommentDto created = commentService.create(
                 CommentDto.builder()
                         .postId(postId)
@@ -115,7 +115,7 @@ class CommentServiceTest {
        댓글 수정 테스트
      ===================== */
     @Test
-    void testUpdate() {
+    public void testUpdate() {
         CommentDto created = commentService.create(
                 CommentDto.builder()
                         .postId(postId)
@@ -134,7 +134,7 @@ class CommentServiceTest {
     }
 
     @Test
-    void testUpdateFail() {
+    public void testUpdateFail() {
         CommentDto created = commentService.create(
                 CommentDto.builder()
                         .postId(postId)
@@ -155,7 +155,7 @@ class CommentServiceTest {
        댓글 삭제 테스트
      ===================== */
     @Test
-    void testDelete() {
+    public void testDelete() {
         CommentDto created = commentService.create(
                 CommentDto.builder()
                         .postId(postId)
@@ -174,7 +174,7 @@ class CommentServiceTest {
        댓글 목록 조회 테스트
      ===================== */
     @Test
-    void testGetList() {
+    public void testGetList() {
         commentService.create(
                 CommentDto.builder()
                         .postId(postId)

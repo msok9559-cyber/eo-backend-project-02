@@ -6,7 +6,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>게시물</title>
     <link rel="stylesheet" href="/css/index.css">
-    <link rel="stylesheet" href="/css/list.css">
+    <style>
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            margin: 20px 0;
+            width: 100%;
+        }
+        .btn-write {
+            position: absolute;
+            right: 0;
+            padding: 8px 18px;
+            background-color: #667;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        .btn-write:hover {
+            background-color: #555;
+        }
+        .comment-count {
+            color: #e74c3c;
+            font-size: 13px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        .empty-message {
+            text-align: center;
+            padding: 50px 0;
+            color: #888;
+        }
+        #post-table { margin-top: 10px; }
+    </style>
     <script src="/js/index.js" defer></script>
 </head>
 <body>
@@ -34,26 +69,18 @@
                 <h3>
                     공지사항
 
-                    <!-- (임시) 공지 카테고리 추가 버튼 -->
-                    <button type="button"
-                            class="add-board-btn"
-                            onclick="openBoardPopup('/board/write?category=NOTICE');">
+                    <!-- 관리자만 공지 카테고리 추가 -->
+                    <a th:href="@{/admin/board/create(category='NOTICE')}"
+                       class="add-board-btn"
+                       aria-label="공지사항 추가"
+                       sec:authorize="hasRole('ADMIN')">
                         <span>공지 카테고리 추가</span>
-                    </button>
+                    </a>
                 </h3>
-
                 <ul class="sidebar-menu">
                     <li th:each="board : ${noticeBoardList}">
                         <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
                            th:text="${board.title}">공지 카테고리</a>
-
-                        <!-- (임시) 공지 카테고리 관리 버튼 -->
-                        <button type="button"
-                                class="board-manage-btn"
-                                aria-label="공지 카테고리 관리"
-                                th:attr="onclick=|openBoardPopup('/board/update?id=${board.id}')|">
-                            <span>공지 카테고리 버튼</span>
-                        </button>
                     </li>
 
                     <li th:if="${noticeBoardList == null || #lists.isEmpty(noticeBoardList)}">
@@ -62,37 +89,24 @@
                 </ul>
             </div>
 
-
             <!-- 게시판 목록 -->
             <div class="sidebar-section">
-                <h3>
-                    게시판
-
-                    <!-- (임시) 게시판 추가 버튼 -->
-                    <button type="button"
-                            class="add-board-btn"
-                            onclick="openBoardPopup('/board/write');">
+                <h3>📋 게시판
+                    <!-- 관리자만 게시판 추가 -->
+                    <a th:href="@{/admin/board/create}"
+                       class="add-board-btn"
+                       aria-label="게시판 추가"
+                       sec:authorize="hasRole('ADMIN')">
                         <span>게시판 추가</span>
-                    </button>
+                    </a>
                 </h3>
-
                 <ul class="sidebar-menu">
-                    <li th:each="board : ${boardList}">
-                        <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
-                           th:text="${board.title}">게시판</a>
-
-                        <!-- 게시판 관리 버튼 (임시) -->
-                        <button type="button"
-                                class="board-manage-btn"
-                                aria-label="게시판 관리"
-                                th:attr="onclick=|openBoardPopup('/board/update?id=${board.id}')|">
-                            <span>게시판 관리 버튼</span>
-                        </button>
-                    </li>
-
-                    <li th:if="${boardList == null || #lists.isEmpty(boardList)}">
-                        <span>등록된 게시판이 없습니다.</span>
-                    </li>
+                    <th:block th:each="board : ${boardList}">
+                        <li>
+                            <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
+                               th:text="${board.title}">게시판</a>
+                        </li>
+                    </th:block>
                 </ul>
             </div>
         </aside>
@@ -104,17 +118,14 @@
             <section id="notice-section">
                 <h4>공지사항</h4>
 
-                <div class="notice-item"
-                     th:each="notice, stat : ${noticeList}"
-                     th:if="${stat.index < 3}">
+                <div class="notice-item" th:each="notice : ${noticeList}">
                     <a th:href="@{/board/{boardId}/post/read(boardId=${notice.boardId}, id=${notice.id})}"
-                       th:text="'[공지] ' + ${notice.title}">
-                        [공지] 공지 제목
+                       th:text="${notice.title}">
+                        공지 제목
                     </a>
                 </div>
 
-                <div class="notice-item notice-empty"
-                     th:if="${noticeList == null || #lists.isEmpty(noticeList)}">
+                <div class="notice-item" th:if="${noticeList == null || #lists.isEmpty(noticeList)}">
                     <span>등록된 공지사항이 없습니다.</span>
                 </div>
             </section>
@@ -130,31 +141,38 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:if="${postPage != null and not #lists.isEmpty(postPage.content)}"
-                    th:each="post, stat : ${postPage.content}">
+                <tr th:if="${tempPosts != null}" th:each="post, stat : ${tempPosts}">
+                    <td th:text="${stat.count}">1</td>
+                    <td class="title">
+                        <a href="#" class="post-title-link"
+                           th:data-post-id="${post.id}"
+                           th:data-post-title="${post.title}"
+                           th:data-post-content="${post.content}"
+                           th:data-post-writer="${post.writer}"
+                           th:data-post-date="${post.date}"
+                           th:data-post-views="${post.views}"
+                           th:text="${post.title}">게시글 제목</a>
+                    </td>
+                    <td th:text="${post.writer}">작성자</td>
+                    <td th:text="${post.date}">02-09</td>
+                    <td th:text="${post.views}">123</td>
+                </tr>
 
+                <tr th:if="${postPage != null && !tempPosts}" th:each="post, stat : ${postPage.content}">
                     <td th:text="${postPage.totalElements - (postPage.number * postPage.size) - stat.index}">1</td>
-
                     <td class="title">
                         <a th:href="@{/board/{boardId}/post/read(boardId=${post.boardId}, id=${post.id})}"
                            th:text="${post.title}">게시글 제목</a>
-
-                        <span th:if="${post.commentsCount > 0}"
-                              class="comment-count"
-                              th:text="'[' + ${post.commentsCount} + ']'"></span>
+                        <span th:if="${post.commentsCount > 0}" class="comment-count"
+                              th:text="' (' + ${post.commentsCount} + ')'"></span>
                     </td>
-
                     <td th:text="${post.writer}">작성자</td>
-
                     <td th:text="${#temporals.format(post.createdAt, 'MM-dd')}">02-09</td>
-
                     <td th:text="${post.viewCount}">123</td>
                 </tr>
 
-                <tr th:if="${postPage == null || #lists.isEmpty(postPage.content)}">
-                    <td colspan="5" class="empty-message">
-                        등록된 게시글이 없습니다.
-                    </td>
+                <tr th:if="${(postPage == null || #lists.isEmpty(postPage.content)) && (tempPosts == null || #lists.isEmpty(tempPosts))}">
+                    <td colspan="5" class="empty-message">등록된 게시글이 없습니다.</td>
                 </tr>
                 </tbody>
             </table>
@@ -186,19 +204,19 @@
             </div>
 
             <!-- 검색 영역 -->
-            <form id="search-section" th:action="@{/board/{boardId}/post/list(boardId=${boardId})}" method="get">
+            <form id="search-section" th:action="@{/}" method="get">
                 <select name="searchType">
-                    <option value="titleContent" th:selected="${searchType == '' || searchType == 'titleContent'}">제목+내용</option>
                     <option value="title" th:selected="${searchType == 'title'}">제목</option>
                     <option value="content" th:selected="${searchType == 'content'}">내용</option>
                     <option value="writer" th:selected="${searchType == 'writer'}">작성자</option>
+                    <option value="titleContent" th:selected="${searchType == 'titleContent'}">제목+내용</option>
                 </select>
                 <input type="text"
                        name="keyword"
                        th:value="${keyword}"
                        placeholder="검색어를 입력하세요"
                        maxlength="100">
-                <button type="submit">검색</button>
+                <button type="submit">🔍검색</button>
             </form>
 
         </main>
@@ -234,11 +252,10 @@
                     <p><span sec:authentication="name">사용자</span>님</p>
                     <div class="profile-links">
                         <a th:href="@{/mypage}">마이페이지</a>
-                        <a href="javascript:void(0);"
-                           th:onclick="|openMessagePopup('@{/messages/all}')|">쪽지함</a>
+                        <a th:href="@{/messages}">쪽지함</a>
                         <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/dashboard}">관리자</a>
-                        <form th:action="@{/logout}" method="post" class="logout-form">
-                            <button type="submit" class="logout-btn">로그아웃</button>
+                        <form th:action="@{/logout}" method="post" onsubmit="return confirmLogout();">
+                            <button type="submit">로그아웃</button>
                         </form>
                     </div>
                 </div>
@@ -248,18 +265,55 @@
             <div id="ranking-section">
                 <h3>인기 게시글</h3>
                 <ul class="ranking-list">
-                    <li th:each="popular, stat : ${popularPosts}" class="ranking-item">
-                        <span class="ranking-number" th:text="${stat.count}">1</span>
-                        <a th:href="@{/board/{boardId}/post/read(boardId=${popular.boardId}, id=${popular.id})}"
-                           th:text="${popular.title}"
-                           th:title="${popular.title}">인기 게시글 제목</a>
-                        <span class="ranking-views"
-                              th:text="${popular.viewCount >= 1000 ? (#numbers.formatDecimal(popular.viewCount / 1000.0, 1, 1) + 'k') : popular.viewCount}">1.2k</span>
+                    <li class="ranking-item">
+                        <span class="ranking-number">1</span>
+                        <a href="#" title="인기 게시글 제목입니다">인기 게시글 제목입니다</a>
+                        <span class="ranking-views">1.2k</span>
                     </li>
-
-                    <!-- 인기 게시글이 없는 경우 -->
-                    <li th:if="${popularPosts == null || #lists.isEmpty(popularPosts)}" class="empty-ranking">
-                        <span>인기 게시글이 없습니다.</span>
+                    <li class="ranking-item">
+                        <span class="ranking-number">2</span>
+                        <a href="#" title="두 번째 인기 게시글">두 번째 인기 게시글</a>
+                        <span class="ranking-views">890</span>
+                    </li>
+                    <li class="ranking-item">
+                        <span class="ranking-number">3</span>
+                        <a href="#" title="세 번째 인기 게시글">세 번째 인기 게시글</a>
+                        <span class="ranking-views">654</span>
+                    </li>
+                    <li class="ranking-item">
+                        <span class="ranking-number">4</span>
+                        <a href="#" title="네 번째 인기 게시글">네 번째 인기 게시글</a>
+                        <span class="ranking-views">532</span>
+                    </li>
+                    <li class="ranking-item">
+                        <span class="ranking-number">5</span>
+                        <a href="#" title="다섯 번째 인기 게시글">다섯 번째 인기 게시글</a>
+                        <span class="ranking-views">421</span>
+                    </li>
+                    <li class="ranking-item">
+                        <span class="ranking-number">6</span>
+                        <a href="#" title="여섯 번째 인기 게시글">여섯 번째 인기 게시글</a>
+                        <span class="ranking-views">398</span>
+                    </li>
+                    <li class="ranking-item">
+                        <span class="ranking-number">7</span>
+                        <a href="#" title="일곱 번째 인기 게시글">일곱 번째 인기 게시글</a>
+                        <span class="ranking-views">356</span>
+                    </li>
+                    <li class="ranking-item">
+                        <span class="ranking-number">8</span>
+                        <a href="#" title="여덟 번째 인기 게시글">여덟 번째 인기 게시글</a>
+                        <span class="ranking-views">312</span>
+                    </li>
+                    <li class="ranking-item">
+                        <span class="ranking-number">9</span>
+                        <a href="#" title="아홉 번째 인기 게시글">아홉 번째 인기 게시글</a>
+                        <span class="ranking-views">289</span>
+                    </li>
+                    <li class="ranking-item">
+                        <span class="ranking-number">10</span>
+                        <a href="#" title="열 번째 인기 게시글">열 번째 인기 게시글</a>
+                        <span class="ranking-views">267</span>
                     </li>
                 </ul>
             </div>

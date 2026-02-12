@@ -1,326 +1,628 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title th:text="${postDto.title}"></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${postDto.title}">게시글</title>
+
+    <!-- index.css 그대로 사용 -->
+    <link rel="stylesheet" href="/css/index.css">
+    <script src="/js/index.js" defer></script>
+
+    <!-- CSRF -->
+    <meta name="_csrf" th:content="${_csrf?.token}">
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}">
+
     <style>
-        #container { width: 800px; }
-        #container > ul { list-style-type: none; padding: 0; display: flex; gap: 50px; }
-
-        #commentForm { margin: 30px 0; }
-        #commentForm > p > label > span { display: none; }
-        #commentForm > p > label > input[type="text"] {
-            display: block; width: 100%; box-sizing: border-box;
-        }
-        #commentForm > p > label > textarea {
-            display: block; width: 100%; height: 7em; line-height: 1.4; box-sizing: border-box;
+        /* ====== read 전용 스타일 ====== */
+        .post-box {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 26px;
+            margin-bottom: 18px;
         }
 
-        #comments { margin: 30px 0; }
-        .comment-item { margin: 20px 0; }
-        .comment-item > span { display: block; }
-        .comment-created-at { font-size: smaller; }
-        .comment-buttons { margin-top: 10px; }
+        .post-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 14px;
+        }
+
+        .post-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 13px;
+            color: #666;
+            padding: 12px 0;
+            border-top: 2px solid #333;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 18px;
+        }
+
+        .post-content {
+            min-height: 260px;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .post-actions {
+            margin-top: 18px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 14px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            background: #fff;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            text-decoration: none;
+            color: #333;
+        }
+        .btn:hover { background: #f0f0f0; }
+        .btn-danger {
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+        .btn-danger:hover { background: #fff0f1; }
+
+        /* ===== 댓글 영역 ===== */
+        .comment-box {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .comment-head {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom: 12px;
+        }
+        .comment-head h3 {
+            font-size: 16px;
+            margin: 0;
+            color: #333;
+        }
+        .comment-total {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .comment-form textarea{
+            width:100%;
+            min-height: 90px;
+            border:1px solid #ddd;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        .comment-form .form-actions{
+            display:flex;
+            justify-content:flex-end;
+            margin-top: 10px;
+        }
+
+
+        .comment-item {
+            padding: 16px 0;
+            border-top: 1px solid #eee;
+        }
+        .comment-item:first-child { border-top: none; }
+
+        .comment-body { width: 100%; }
+
+        .comment-top {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap: 10px;
+        }
+        .comment-writer {
+            font-weight: bold;
+            font-size: 14px;
+            color:#333;
+        }
+        .comment-time {
+            font-size: 12px;
+            color:#888;
+            white-space: nowrap;
+        }
+
+        .comment-content {
+            margin-top: 8px;
+            font-size: 14px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            color:#333;
+        }
+
+        .comment-footer {
+            margin-top: 10px;
+            display:flex;
+            justify-content:flex-end;
+            align-items:center;
+            gap: 8px;
+        }
+
+        .comment-actions {
+            display:flex;
+            gap:8px;
+        }
+
+        .comment-actions button {
+            padding: 7px 12px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            background:#fff;
+            cursor:pointer;
+            font-size: 12px;
+            font-weight:bold;
+        }
+        .comment-actions button:hover { background:#f0f0f0; }
+
+        .comment-actions .del {
+            color:#dc3545;
+            border-color:#f2b8bf;
+        }
+        .comment-actions .del:hover { background:#fff0f1; }
+
+        .comment-editbox { display:none; margin-top:10px; }
+        .comment-editbox textarea {
+            width:100%;
+            min-height: 80px;
+            border:1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px;
+        }
+        .comment-editbox .row {
+            display:flex;
+            justify-content:flex-end;
+            gap:8px;
+            margin-top: 8px;
+        }
+
+        .empty-comment {
+            padding: 18px 0;
+            color:#888;
+            text-align:center;
+        }
+
+        .error-text {
+            color:#dc3545;
+            font-size: 13px;
+            margin-top: 8px;
+            display:none;
+        }
     </style>
-    <script>
-        window.addEventListener('load', function () {
-            document.getElementById('delete')?.addEventListener('click', function (event) {
-                if (!window.confirm('Are you sure to delete the post?')) {
-                    event.preventDefault();
-                }
-            });
-        });
-    </script>
+
+    <!-- JS에서 postId, 로그인 정보 사용 -->
     <script th:inline="javascript">
         const postId = /*[[${postDto.id}]]*/ 1;
-    </script>
-    <script>
-        const COMMENT_API_URI = `/api/posts/${postId}/comments`;
 
-        window.addEventListener('load', function () {
-            const $comments = document.getElementById('comments');
-            const $commentForm = document.getElementById('commentForm');
+        // 로그인한 사용자 id (없으면 null)
+        const currentUserId =
+            /*[[${#authentication?.principal instanceof T(com.example.community.security.CustomUserDetails)
+                ? #authentication.principal.id
+                : null}]]*/ null;
 
-            // 댓글 목록 읽어오기
-            window.fetch(COMMENT_API_URI)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP Error: ${response.statusText}`);
-                    }
-
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('LIST:', data);
-
-                    let html = '';
-
-                    data.forEach(comment => {
-                        html += getHTMLCommentElement(comment);
-                    });
-
-                    $comments.innerHTML = html;
-                })
-                .catch(error => {
-                    console.error(error);
-                });
-
-            // 댓글 등록
-            let isPosting = false;
-
-            $commentForm.addEventListener('submit', function (event) {
-                event.preventDefault();
-
-                if (isPosting) return;
-
-                const writer = this.writer.value;
-                const content = this.content.value;
-
-                if (writer.length <= 0 || content.length <= 0) {
-                    window.alert('You must enter a writer and content.')
-                    return;
-                }
-
-                isPosting = true;
-                $commentForm.submit.disabled = true;
-
-                window.fetch(COMMENT_API_URI, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        postId: postId,
-                        writer: writer,
-                        content: content,
-                    })
-                })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP Error: ${response.statusText}`);
-                        }
-
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log('CREATE:', data);
-
-                        $comments.innerHTML += getHTMLCommentElement(data);
-
-                        window.alert('You have created a new comment!');
-
-                        $commentForm.writer.value = '';
-                        $commentForm.content.value = '';
-                        $commentForm.submit.disabled = false;
-                        isPosting = false;
-
-                        location.href += `#comment-${data.id}`;
-                    })
-                    .catch(error => {
-                        console.error(error);
-                    });
-            }); // #commentForm.onsubmit
-
-            $comments.addEventListener('click', function (event) {
-                if (!event.target || event.target === this) return;
-
-                // 댓글 삭제
-                if (event.target.classList.contains('comment-button-delete')) {
-                    const commentId = event.target.dataset.id;
-                    if (!commentId) return;
-
-                    if (!window.confirm('Are you sure to delete the comment?')) return;
-
-                    console.log('DELETE: ' + commentId);
-
-                    window.fetch(COMMENT_API_URI + `/${commentId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
-                    })
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error(`HTTP Error: ${response.statusText}`);
-                            }
-
-                            const $thisComment = $comments.querySelector(`#comment-${commentId}`);
-                            $comments.removeChild($thisComment);
-                        })
-                        .catch(error => {
-                            console.error(error);
-                        });
-                } else if (event.target.classList.contains('comment-button-edit')) {
-                    const commentId = event.target.dataset.id;
-                    if (!commentId) return;
-
-                    console.log('UPDATE: ' + commentId);
-
-                    const $thisComment = $comments.querySelector(`#comment-${commentId}`);
-                    const writer = $thisComment.querySelector('.comment-writer').innerHTML;
-                    const content = $thisComment.querySelector('.comment-content').innerHTML;
-                    // const createdAt = $thisComment.querySelector('.comment-created-at').dataset.value;
-
-                    const commentHTML = $thisComment.innerHTML;
-
-                    $thisComment.innerHTML = `<form id="commentEditForm">
-  <p>
-    <label>
-      <span>Writer:</span>
-      <input type="text" name="writer" placeholder="Your name" value="${writer}" required>
-    </label>
-  </p>
-  <p>
-    <label>
-      <span>Comment:</span>
-      <textarea name="content" placeholder="Your comment" required>${content}</textarea>
-    </label>
-  </p>
-  <p>
-    <input type="submit" name="submit" value="Submit">
-    <button type="button" name="cancel" id="cancelEdit">Cancel</button>
-  </p>
-</form>`;
-
-                    $thisComment.querySelector('#commentEditForm').addEventListener('submit', function (event) {
-                        event.preventDefault();
-
-                        if (isPosting) return;
-
-                        const writer = this.writer.value;
-                        const content = this.content.value;
-
-                        if (writer.length <= 0 || content.length <= 0) {
-                            window.alert('You must enter a writer and content.')
-                            return;
-                        }
-
-                        isPosting = true;
-
-                        window.fetch(COMMENT_API_URI + `/${commentId}`, {
-                            method: 'PUT',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                id: commentId,
-                                postId: postId,
-                                writer: writer,
-                                content: content,
-                            })
-                        })
-                            .then(response => {
-                                if (!response.ok) {
-                                    throw new Error(`HTTP Error: ${response.statusText}`);
-                                }
-
-                                return response.json();
-                            })
-                            .then(data => {
-                                console.log('UPDATE:', data);
-                                $thisComment.innerHTML = getHTMLCommentElement(data);
-
-                                isPosting = false;
-                            })
-                            .catch(error => {
-                                console.error(error);
-                            });
-                    });
-
-                    $thisComment.querySelector('#cancelEdit').addEventListener('click', function (event) {
-                        $thisComment.innerHTML = commentHTML;
-                    });
-                }
-            });
-        });
-
-        /**
-         * 댓글을 표현하는 HTML 형식의 문자열 생성
-         *
-         * @param comment CommentDto 형식의 JSON
-         */
-        function getHTMLCommentElement(comment) {
-            return `<div id="comment-${comment.id}" class="comment-item" data-id="${comment.id}">
-<span class="comment-writer">${comment.writer}</span>
-<span class="comment-content">${comment.content}</span>
-<span class="comment-created-at" data-value="${comment.createdAt}">${formatDateTime(comment.createdAt)}</span>
-<div class="comment-buttons">
-  <button type="button" class="comment-button-edit" data-id="${comment.id}">Edit</button>
-  <button type="button" class="comment-button-delete" data-id="${comment.id}">Delete</button>
-</div>
-</div>`;
-        }
-
-        /**
-         * ISO 8601 형식의 문자열을 "yyyy-MM-dd HH:mm" 형식으로 변환
-         */
-        function formatDateTime(strDate) {
-            const date = new Date(strDate);
-
-            const year = date.getFullYear();
-            const month = (date.getMonth() + 1).toString().padStart(2, '0');
-            const day = date.getDate().toString().padStart(2, '0');
-            const hours = date.getHours().toString().padStart(2, '0');
-            const minutes = date.getMinutes().toString().padStart(2, '0');
-            // const seconds = date.getSeconds().toString().padStart(2, '0');
-
-            return `${year}-${month}-${day} ${hours}:${minutes}`;
-        }
-
-        /*
-         * React
-         * Vue.js
-         * Next.js
-         */
-
+        // 관리자 여부
+        const isAdmin = /*[[${#authorization.expression("hasRole('ADMIN')")}]]*/ false;
     </script>
 </head>
+
 <body>
+<div id="wrapper">
 
-<div id="container" th:object="${postDto}">
-    <h1 th:text="*{title}"></h1>
+    <!-- 헤더 -->
+    <header id="header">
+        <div id="logo">
+            <a th:href="@{/}">
+                <img src="/images/logo.png" alt="로고">
+            </a>
+        </div>
+        <div id="banner"></div>
+    </header>
 
-    <ul id="info">
-        <li>ID: <span th:text="*{id}"></span></li>
-        <li>Writer: <span th:text="*{writer}"></span></li>
-        <li>Date: <span th:text="*{#temporals.format(createdAt, 'yyyy-MM-dd HH:mm:ss')}"></span></li>
-        <li>Last updated: <span th:text="*{#temporals.format(updatedAt, 'yyyy-MM-dd HH:mm:ss')}"></span></li>
-    </ul>
+    <!-- 메인 레이아웃 -->
+    <div id="main-layout">
 
-    <p th:text="*{content}"></p>
+        <!-- 왼쪽 사이드바 (index와 동일하게 유지) -->
+        <aside id="left-sidebar">
+            <div class="sidebar-section">
+                <h3>
+                    공지사항
+                    <a th:href="@{/admin/board/create(category='NOTICE')}"
+                       class="add-board-btn"
+                       aria-label="공지사항 추가"
+                       sec:authorize="hasRole('ADMIN')">
+                        <span>공지 카테고리 추가</span>
+                    </a>
+                </h3>
+                <ul class="sidebar-menu">
+                    <li th:each="board : ${noticeBoardList}">
+                        <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
+                           th:text="${board.title}">공지 카테고리</a>
+                    </li>
 
-    <hr>
+                    <li th:if="${noticeBoardList == null || #lists.isEmpty(noticeBoardList)}">
+                        <span>등록된 공지 카테고리가 없습니다.</span>
+                    </li>
+                </ul>
+            </div>
 
-    <p>
-        [<a th:href="@{list(page=${criteria.page})}">List</a>]
-        [<a th:href="@{update(id=*{id}, page=${criteria.page})}">Update</a>]
-        [<a th:href="@{delete(id=*{id}, page=${criteria.page})}" id="delete">Delete</a>]
-    </p>
+            <div class="sidebar-section">
+                <h3>📋 게시판
+                    <a th:href="@{/admin/board/create}"
+                       class="add-board-btn"
+                       aria-label="게시판 추가"
+                       sec:authorize="hasRole('ADMIN')">
+                        <span>게시판 추가</span>
+                    </a>
+                </h3>
+                <ul class="sidebar-menu">
+                    <th:block th:each="board : ${boardList}">
+                        <li>
+                            <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
+                               th:text="${board.title}">게시판</a>
+                        </li>
+                    </th:block>
+                </ul>
+            </div>
+        </aside>
 
-    <hr>
+        <!-- 중앙 메인 컨텐츠 -->
+        <main id="main-content">
 
-    <form id="commentForm">
-        <p>
-            <label>
-                <span>Writer:</span>
-                <input type="text" name="writer" placeholder="Your name" required>
-            </label>
-        </p>
-        <p>
-            <label>
-                <span>Comment:</span>
-                <textarea name="content" placeholder="Your comment" required></textarea>
-            </label>
-        </p>
-        <p>
-            <input type="submit" name="submit" value="Submit">
-        </p>
-    </form>
+            <!-- ===== 게시글 상세 ===== -->
+            <div class="post-box" th:object="${postDto}">
+                <div class="post-title" th:text="*{title}">제목</div>
 
-    <hr>
+                <div class="post-meta">
+                    <span><strong>작성자:</strong> <span th:text="*{writer}">writer</span></span>
+                    <span><strong>작성일:</strong> <span th:text="*{#temporals.format(createdAt,'yyyy-MM-dd HH:mm')}">date</span></span>
+                    <span><strong>조회수:</strong> <span th:text="*{viewCount}">0</span></span>
+                    <span><strong>좋아요:</strong> <span th:text="*{likesCount}">0</span></span>
+                    <span><strong>댓글:</strong> <span th:text="*{commentsCount}">0</span></span>
+                </div>
 
-    <div id="comments"></div>
-</div> <!-- /#container -->
+                <div class="post-content" th:text="*{content}">본문</div>
+
+                <div class="post-actions">
+
+                    <a class="btn" th:href="@{/}">
+                        목록
+                    </a>
+
+                    <!-- 작성자만 수정 (관리자는 수정 불가) -->
+                    <a class="btn"
+                       sec:authorize="isAuthenticated()"
+                       th:if="${postDto.userId} != null
+                              and ${#authentication.principal instanceof T(com.example.community.security.CustomUserDetails)}
+                              and ${postDto.userId} == ${#authentication.principal.id}
+                              and !${#authorization.expression('hasRole(''ADMIN'')')}"
+                       th:href="@{/board/{boardId}/post/update(boardId=${postDto.boardId}, id=${postDto.id})}">
+                        수정
+                    </a>
+
+                    <!-- 작성자 또는 관리자 삭제 (관리자는 삭제만) -->
+                    <form sec:authorize="isAuthenticated()"
+                          th:if="(${postDto.userId} != null
+                                  and ${#authentication.principal instanceof T(com.example.community.security.CustomUserDetails)}
+                                  and ${postDto.userId} == ${#authentication.principal.id})
+                                or ${#authorization.expression('hasRole(''ADMIN'')')}"
+                          th:action="@{/board/{boardId}/post/delete(boardId=${postDto.boardId}, id=${postDto.id})}"
+                          method="post"
+                          onsubmit="return confirm('게시글을 삭제할까요?');">
+                        <button class="btn btn-danger" type="submit">삭제</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ===== 댓글 영역 ===== -->
+            <div class="comment-box">
+                <div class="comment-head">
+                    <h3>댓글</h3>
+                    <div class="comment-total">총 <span id="commentCount">0</span>개</div>
+                </div>
+
+                <!-- 로그인 시 댓글 작성 -->
+                <div class="comment-form" sec:authorize="isAuthenticated()">
+                    <textarea id="newComment" maxlength="200" placeholder="댓글을 입력하세요. (1~200자)"></textarea>
+                    <div class="form-actions">
+                        <button class="btn" id="btnCreateComment" type="button">등록</button>
+                    </div>
+                    <div class="error-text" id="commentError"></div>
+                </div>
+
+                <!-- 비로그인 안내 -->
+                <div class="empty-comment" sec:authorize="isAnonymous()">
+                    댓글을 작성하려면 로그인하세요.
+                </div>
+
+                <div id="commentList"></div>
+                <div class="empty-comment" id="emptyCommentMsg" style="display:none;">
+                    아직 댓글이 없습니다.
+                </div>
+            </div>
+
+        </main>
+
+        <!-- 오른쪽 사이드바 (index와 동일하게 유지) -->
+        <aside id="right-sidebar">
+
+            <div id="auth-box" sec:authorize="!isAuthenticated()">
+                <h3>로그인</h3>
+                <form th:action="@{/login}" method="post">
+                    <input type="text" name="username" placeholder="아이디" autocomplete="username" required>
+                    <input type="password" name="password" placeholder="비밀번호" autocomplete="current-password" required>
+                    <button type="submit">로그인</button>
+                </form>
+                <div class="auth-links">
+                    <a th:href="@{/signup}">회원가입</a>
+                    <a th:href="@{/find-password}">ID/PW 찾기</a>
+                </div>
+            </div>
+
+            <div id="auth-box2" sec:authorize="isAuthenticated()">
+                <div class="user-info">
+                    <p><span sec:authentication="name">사용자</span>님</p>
+                    <div class="profile-links">
+                        <a th:href="@{/mypage}">마이페이지</a>
+                        <a th:href="@{/messages}">쪽지함</a>
+                        <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/dashboard}">관리자</a>
+                        <form th:action="@{/logout}" method="post" onsubmit="return confirmLogout();">
+                            <button type="submit">로그아웃</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 인기 게시글 랭킹 -->
+            <div id="ranking-section">
+                <h3>인기 게시글</h3>
+                <ul class="ranking-list">
+                    <li class="ranking-item">
+                        <span class="ranking-number">1</span>
+                        <a href="#" title="인기 게시글 제목입니다">인기 게시글 제목입니다</a>
+                        <span class="ranking-views">1.2k</span>
+                    </li>
+                </ul>
+            </div>
+
+        </aside>
+    </div>
+
+    <footer id="footer">
+        <p><strong>백엔드 개발자 양성과정 2차 프로젝트</strong></p>
+        <p>Community Platform © 2026 All rights reserved.</p>
+    </footer>
+
+</div>
+
+<script>
+    const COMMENT_API = `/api/posts/${postId}/comments`;
+
+    const $list = document.getElementById('commentList');
+    const $count = document.getElementById('commentCount');
+    const $empty = document.getElementById('emptyCommentMsg');
+
+    const $new = document.getElementById('newComment');
+    const $btnCreate = document.getElementById('btnCreateComment');
+    const $err = document.getElementById('commentError');
+
+    function getCsrf() {
+        const token = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        const header = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+        if (!token || !header) return null;
+        return { token, header };
+    }
+
+    function withCsrf(headers = {}) {
+        const csrf = getCsrf();
+        if (!csrf) return headers;
+        return { ...headers, [csrf.header]: csrf.token };
+    }
+
+    async function fetchJson(url, options = {}) {
+        const res = await fetch(url, {
+            credentials: 'same-origin',
+            ...options,
+            headers: withCsrf({
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+            })
+        });
+
+        if (res.status === 401) throw new Error('로그인이 필요합니다.');
+        if (res.status === 403) throw new Error('권한이 없습니다.');
+        if (res.status === 404) throw new Error('요청한 리소스를 찾을 수 없습니다.');
+        if (!res.ok) {
+            const t = await res.text();
+            throw new Error(t || `HTTP ${res.status}`);
+        }
+        if (res.status === 204) return null;
+        return res.json();
+    }
+
+    function formatDateTime(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        const yy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mi = String(d.getMinutes()).padStart(2, '0');
+        return `${yy}.${mm}.${dd} ${hh}:${mi}`;
+    }
+
+    function escapeHtml(str) {
+        return String(str)
+            .replaceAll('&','&amp;')
+            .replaceAll('<','&lt;')
+            .replaceAll('>','&gt;')
+            .replaceAll('"','&quot;')
+            .replaceAll("'","&#039;");
+    }
+
+
+    function render(comments) {
+        $count.textContent = String(comments.length);
+        $empty.style.display = comments.length ? 'none' : 'block';
+
+        $list.innerHTML = comments.map(c => {
+            const isOwner = (currentUserId != null && Number(c.userId) === Number(currentUserId));
+            const showDelete = isOwner || isAdmin;
+            const showEdit = isOwner && !isAdmin;
+
+            return `
+                <div class="comment-item" id="comment-${c.id}" data-id="${c.id}">
+                    <div class="comment-body">
+                        <div class="comment-top">
+                            <div class="comment-writer">${escapeHtml(c.writer ?? 'unknown')}</div>
+                            <div class="comment-time">${formatDateTime(c.createdAt)}</div>
+                        </div>
+
+                        <div class="comment-content" data-content>${escapeHtml(c.content ?? '')}</div>
+
+                        <div class="comment-editbox" data-editbox>
+                            <textarea maxlength="200"></textarea>
+                            <div class="row">
+                                <button type="button" data-action="cancel">취소</button>
+                                <button type="button" data-action="save">저장</button>
+                            </div>
+                        </div>
+
+                        <div class="comment-footer" style="${(showEdit || showDelete) ? '' : 'display:none'}">
+                            <div class="comment-actions">
+                                ${showEdit ? `<button type="button" data-action="edit">수정</button>` : ``}
+                                ${showDelete ? `<button type="button" class="del" data-action="delete">삭제</button>` : ``}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function loadComments() {
+        const data = await fetchJson(COMMENT_API, { method: 'GET' });
+        render(Array.isArray(data) ? data : []);
+    }
+
+    async function createComment() {
+        if (!$new) return;
+
+        const content = $new.value.trim();
+        $err.style.display = 'none';
+        $err.textContent = '';
+
+        if (content.length < 1 || content.length > 200) {
+            $err.style.display = 'block';
+            $err.textContent = '댓글은 1~200자여야 합니다.';
+            return;
+        }
+
+        await fetchJson(COMMENT_API, {
+            method: 'POST',
+            body: JSON.stringify({ content })
+        });
+
+        $new.value = '';
+        await loadComments();
+    }
+
+    function openEditBox($item) {
+        const $editBox = $item.querySelector('[data-editbox]');
+        const $content = $item.querySelector('[data-content]');
+        const $ta = $editBox.querySelector('textarea');
+
+        $ta.value = $content.textContent.trim();
+        $editBox.style.display = 'block';
+        $content.style.display = 'none';
+    }
+
+    function closeEditBox($item) {
+        const $editBox = $item.querySelector('[data-editbox]');
+        const $content = $item.querySelector('[data-content]');
+        $editBox.style.display = 'none';
+        $content.style.display = 'block';
+    }
+
+    async function saveEdit($item) {
+        if (isAdmin) {
+            alert('관리자는 댓글을 수정할 수 없습니다.');
+            return;
+        }
+
+        const id = $item.dataset.id;
+        const $editBox = $item.querySelector('[data-editbox]');
+        const $ta = $editBox.querySelector('textarea');
+        const content = $ta.value.trim();
+
+        if (content.length < 1 || content.length > 200) {
+            alert('댓글은 1~200자여야 합니다.');
+            return;
+        }
+
+        await fetchJson(`${COMMENT_API}/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ id: Number(id), postId: postId, content })
+        });
+
+        await loadComments();
+    }
+
+    async function deleteComment(id) {
+        if (!confirm('댓글을 삭제할까요?')) return;
+        await fetchJson(`${COMMENT_API}/${id}`, { method: 'DELETE' });
+        await loadComments();
+    }
+
+    window.addEventListener('load', async () => {
+        await loadComments();
+
+        if ($btnCreate) $btnCreate.addEventListener('click', async () => {
+            try { await createComment(); }
+            catch (e) {
+                $err.style.display = 'block';
+                $err.textContent = e.message;
+            }
+        });
+
+        $list.addEventListener('click', async (e) => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+
+            const $item = e.target.closest('.comment-item');
+            if (!$item) return;
+
+            const action = btn.dataset.action;
+
+            try {
+                if (action === 'edit') openEditBox($item);
+                if (action === 'cancel') closeEditBox($item);
+                if (action === 'save') await saveEdit($item);
+                if (action === 'delete') await deleteComment($item.dataset.id);
+            } catch (err) {
+                alert(err.message || '요청 실패');
+            }
+        });
+    });
+</script>
 
 </body>
 </html>
