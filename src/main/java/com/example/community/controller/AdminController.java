@@ -208,7 +208,7 @@ public class AdminController {
     @PostMapping("/boards")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> createBoard(@RequestParam String title){
-        log.info("Create board - title: {]", title);
+        log.info("Create board - title: {}", title);
         Map<String, Object> response = new HashMap<>();
         try {
             BoardDto boardDto = BoardDto.builder()
@@ -222,9 +222,15 @@ public class AdminController {
             return ResponseEntity.ok(response);
 
         }catch (IllegalArgumentException e){
+            log.error("Board creation failed: ", e);
             response.put("success", false);
             response.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.ok(response);
+        }catch (Exception e) {  
+            log.error("Unexpected error: ", e);
+            response.put("success", false);
+            response.put("message", "게시판 생성에 실패했습니다.");
+            return ResponseEntity.ok(response);
         }
     }
 

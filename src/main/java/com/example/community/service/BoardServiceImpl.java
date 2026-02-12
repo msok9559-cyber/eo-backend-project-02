@@ -23,7 +23,8 @@ public class BoardServiceImpl implements BoardService {
     public void create(@NotNull BoardDto boardDto) {
         log.info("CREATE: boardDto = {}", boardDto);
 
-        checkTitleAvailability(boardDto.getTitle());
+        // 테스트중 임시 주석
+        // checkTitleAvailability(boardDto.getTitle());
 
         BoardEntity savedEntity = boardRepository.save(BoardEntity.from(boardDto));
 
@@ -46,10 +47,10 @@ public class BoardServiceImpl implements BoardService {
             String newTitle = boardDto.getTitle();
             String oldTitle = boardEntity.getTitle();
 
-            // 제목이 바뀐 경우에만 중복 체크
-            if (!oldTitle.equals(newTitle)) {
-                checkTitleAvailability(newTitle);
-            }
+            // 제목이 바뀐 경우에만 중복 체크(임시로 주석처리 테스트중)
+//            if (!oldTitle.equals(newTitle)) {
+//                checkTitleAvailability(newTitle);
+//            }
 
             BoardEntity updatedEntity = boardRepository.save(boardEntity.update(boardDto));
             return BoardDto.from(updatedEntity);

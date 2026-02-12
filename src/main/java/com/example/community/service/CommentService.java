@@ -15,6 +15,7 @@ public interface CommentService {
     boolean delete(Long id, Long userId);
     List<CommentDto> getList(Long postId);
 
+    // 전체 댓글 조회용
     Page<CommentDto> getAllComments(Pageable pageable);
 }
 
