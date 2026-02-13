@@ -52,7 +52,7 @@ public class SecurityConfiguration {
         httpSecurity
                 .authorizeHttpRequests(authorize -> authorize
                         .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
-                        .requestMatchers("/", "/login", "/signup", "/check-username", "/check-nickname").permitAll()
+                        .requestMatchers("/", "/login", "/signup", "/check-username", "/check-nickname","/findpassword").permitAll()
                         .requestMatchers("/send-verification-email", "/verify-email-code").permitAll()
                         .requestMatchers("/css/**", "/images/**", "/js/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")

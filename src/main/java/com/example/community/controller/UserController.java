@@ -118,4 +118,11 @@ public class UserController {
 
         return response;
     }
+
+    @GetMapping("/findpassword")
+    public void findpassword() {
+//        비밀번호 찾기 페이지
+    }
 }
+
+
