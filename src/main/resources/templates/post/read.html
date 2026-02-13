@@ -6,19 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${postDto.title}">게시글</title>
 
-    <!-- index.css 그대로 사용 -->
+    <link rel="stylesheet" href="/css/reset.css">
     <link rel="stylesheet" href="/css/index.css">
     <link rel="stylesheet" href="/css/post-read.css">
+
     <script src="/js/index.js" defer></script>
     <script src="/js/post-read.js" defer></script>
 
-    <!-- CSRF -->
     <meta name="_csrf" th:content="${_csrf?.token}">
     <meta name="_csrf_header" th:content="${_csrf?.headerName}">
-    
 </head>
 
 <body>
+
 <div id="wrapper">
 
     <!-- 헤더 -->
@@ -34,135 +34,142 @@
     <!-- 메인 레이아웃 -->
     <div id="main-layout">
 
-        <!-- 왼쪽 사이드바 (index와 동일하게 유지) -->
+        <!-- 왼쪽 사이드바 -->
         <aside id="left-sidebar">
+
+            <!-- 공지사항 -->
             <div class="sidebar-section">
                 <h3>
                     공지사항
-                    <a th:href="@{/admin/board/create(category='NOTICE')}"
-                       class="add-board-btn"
-                       aria-label="공지사항 추가"
-                       sec:authorize="hasRole('ADMIN')">
+                    <button type="button"
+                            class="add-board-btn"
+                            onclick="openBoardPopup('/board/write?category=NOTICE');">
                         <span>공지 카테고리 추가</span>
-                    </a>
+                    </button>
                 </h3>
+
                 <ul class="sidebar-menu">
                     <li th:each="board : ${noticeBoardList}">
                         <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
-                           th:text="${board.title}">공지 카테고리</a>
-                    </li>
-
-                    <li th:if="${noticeBoardList == null || #lists.isEmpty(noticeBoardList)}">
-                        <span>등록된 공지 카테고리가 없습니다.</span>
+                           th:text="${board.title}">공지</a>
+                        <button type="button"
+                                class="board-manage-btn"
+                                th:attr="onclick=|openBoardPopup('/board/update?id=${board.id}')|">
+                            <span>관리</span>
+                        </button>
                     </li>
                 </ul>
             </div>
 
+            <!-- 게시판 -->
             <div class="sidebar-section">
-                <h3>📋 게시판
-                    <a th:href="@{/admin/board/create}"
-                       class="add-board-btn"
-                       aria-label="게시판 추가"
-                       sec:authorize="hasRole('ADMIN')">
+                <h3>
+                    게시판
+                    <button type="button"
+                            class="add-board-btn"
+                            onclick="openBoardPopup('/board/write');">
                         <span>게시판 추가</span>
-                    </a>
+                    </button>
                 </h3>
+
                 <ul class="sidebar-menu">
-                    <th:block th:each="board : ${boardList}">
-                        <li>
-                            <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
-                               th:text="${board.title}">게시판</a>
-                        </li>
-                    </th:block>
+                    <li th:each="board : ${boardList}">
+                        <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
+                           th:text="${board.title}">게시판</a>
+                        <button type="button"
+                                class="board-manage-btn"
+                                th:attr="onclick=|openBoardPopup('/board/update?id=${board.id}')|">
+                            <span>관리</span>
+                        </button>
+                    </li>
                 </ul>
             </div>
+
         </aside>
 
-        <!-- 중앙 메인 컨텐츠 -->
+        <!-- 중앙 메인 -->
         <main id="main-content">
 
-            <!-- ===== 게시글 상세 ===== -->
-            <div class="post-box" th:object="${postDto}">
-                <div class="post-title" th:text="*{title}">제목</div>
+            <div class="content-wrapper">
 
-                <div class="post-meta">
-                    <span><strong>작성자:</strong> <span th:text="*{writer}">writer</span></span>
-                    <span><strong>작성일:</strong> <span th:text="*{#temporals.format(createdAt,'yyyy-MM-dd HH:mm')}">date</span></span>
-                    <span><strong>조회수:</strong> <span th:text="*{viewCount}">0</span></span>
-                    <span><strong>좋아요:</strong> <span th:text="*{likesCount}">0</span></span>
-                    <span><strong>댓글:</strong> <span th:text="*{commentsCount}">0</span></span>
-                </div>
+                <!-- 게시글 상세 -->
+                <div class="post-box" th:object="${postDto}">
 
-                <div class="post-content" th:text="*{content}">본문</div>
+                    <div class="post-title" th:text="*{title}">제목</div>
 
-                <div class="post-actions">
-
-                    <a class="btn" th:href="@{/}">
-                        목록
-                    </a>
-
-                    <!-- 작성자만 수정 (관리자는 수정 불가) -->
-                    <a class="btn"
-                       sec:authorize="isAuthenticated()"
-                       th:if="${postDto.userId} != null
-                              and ${#authentication.principal instanceof T(com.example.community.security.CustomUserDetails)}
-                              and ${postDto.userId} == ${#authentication.principal.id}
-                              and !${#authorization.expression('hasRole(''ADMIN'')')}"
-                       th:href="@{/board/{boardId}/post/update(boardId=${postDto.boardId}, id=${postDto.id})}">
-                        수정
-                    </a>
-
-                    <!-- 작성자 또는 관리자 삭제 (관리자는 삭제만) -->
-                    <form sec:authorize="isAuthenticated()"
-                          th:if="(${postDto.userId} != null
-                                  and ${#authentication.principal instanceof T(com.example.community.security.CustomUserDetails)}
-                                  and ${postDto.userId} == ${#authentication.principal.id})
-                                or ${#authorization.expression('hasRole(''ADMIN'')')}"
-                          th:action="@{/board/{boardId}/post/delete(boardId=${postDto.boardId}, id=${postDto.id})}"
-                          method="post"
-                          onsubmit="return confirm('게시글을 삭제할까요?');">
-                        <button class="btn btn-danger" type="submit">삭제</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- ===== 댓글 영역 ===== -->
-            <div class="comment-box">
-                <div class="comment-head">
-                    <h3>댓글</h3>
-                    <div class="comment-total">총 <span id="commentCount">0</span>개</div>
-                </div>
-
-                <!-- 로그인 시 댓글 작성 -->
-                <div class="comment-form" sec:authorize="isAuthenticated()">
-                    <textarea id="newComment" maxlength="200" placeholder="댓글을 입력하세요. (1~200자)"></textarea>
-                    <div class="form-actions">
-                        <button class="btn" id="btnCreateComment" type="button">등록</button>
+                    <div class="post-meta">
+                        <span>작성자 <strong th:text="*{writer}">writer</strong></span>
+                        <span th:text="*{#temporals.format(createdAt,'yyyy-MM-dd HH:mm')}">date</span>
+                        <span>조회 <strong th:text="*{viewCount}">0</strong></span>
+                        <span>좋아요 <strong th:text="*{likesCount}">0</strong></span>
+                        <span>댓글 <strong th:text="*{commentsCount}">0</strong></span>
                     </div>
-                    <div class="error-text" id="commentError"></div>
+
+                    <div class="post-content" th:text="*{content}">내용</div>
+
+                    <div class="post-actions">
+
+                        <a class="btn" th:href="@{/board/{boardId}/post/list(boardId=${postDto.boardId})}">
+                            목록
+                        </a>
+
+                        <a class="btn"
+                           sec:authorize="isAuthenticated()"
+                           th:if="${postDto.userId} == ${#authentication.principal.id}"
+                           th:href="@{/board/{boardId}/post/update(boardId=${postDto.boardId}, id=${postDto.id})}">
+                            수정
+                        </a>
+
+                        <form sec:authorize="isAuthenticated()"
+                              th:if="${postDto.userId} == ${#authentication.principal.id}
+                                or ${#authorization.expression('hasRole(''ADMIN'')')}"
+                              th:action="@{/board/{boardId}/post/delete(boardId=${postDto.boardId}, id=${postDto.id})}"
+                              method="post"
+                              onsubmit="return confirm('게시글을 삭제할까요?');">
+                            <button type="submit" class="btn btn-danger">삭제</button>
+                        </form>
+
+                    </div>
+
                 </div>
 
-                <!-- 비로그인 안내 -->
-                <div class="empty-comment" sec:authorize="isAnonymous()">
-                    댓글을 작성하려면 로그인하세요.
+                <!-- 댓글 -->
+                <div class="comment-box">
+
+                    <div class="comment-head">
+                        <h3>댓글</h3>
+                        <span>총 <strong id="commentCount">0</strong>개</span>
+                    </div>
+
+                    <div class="comment-form" sec:authorize="isAuthenticated()">
+                        <textarea id="newComment" placeholder="댓글을 입력하세요."></textarea>
+                        <div class="form-actions">
+                            <button id="btnCreateComment" type="button">등록</button>
+                        </div>
+                        <p class="error-text" id="commentError"></p>
+                    </div>
+
+                    <div class="empty-comment" sec:authorize="isAnonymous()">
+                        댓글 작성은 로그인 후 가능합니다.
+                    </div>
+
+                    <div id="commentList"></div>
+
                 </div>
 
-                <div id="commentList"></div>
-                <div class="empty-comment" id="emptyCommentMsg" style="display:none;">
-                    아직 댓글이 없습니다.
-                </div>
             </div>
 
         </main>
 
-        <!-- 오른쪽 사이드바 (index와 동일하게 유지) -->
+        <!-- 오른쪽 사이드바 -->
         <aside id="right-sidebar">
 
+            <!-- 비로그인 -->
             <div id="auth-box" sec:authorize="!isAuthenticated()">
                 <h3>로그인</h3>
                 <form th:action="@{/login}" method="post">
-                    <input type="text" name="username" placeholder="아이디" autocomplete="username" required>
-                    <input type="password" name="password" placeholder="비밀번호" autocomplete="current-password" required>
+                    <input type="text" name="username" placeholder="아이디" required>
+                    <input type="password" name="password" placeholder="비밀번호" required>
                     <button type="submit">로그인</button>
                 </form>
                 <div class="auth-links">
@@ -171,6 +178,7 @@
                 </div>
             </div>
 
+            <!-- 로그인 -->
             <div id="auth-box2" sec:authorize="isAuthenticated()">
                 <div class="user-info">
                     <p><span sec:authentication="name">사용자</span>님</p>
@@ -178,38 +186,38 @@
                         <a th:href="@{/mypage}">마이페이지</a>
                         <a th:href="@{/messages}">쪽지함</a>
                         <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/dashboard}">관리자</a>
-                        <form th:action="@{/logout}" method="post" onsubmit="return confirmLogout();">
-                            <button type="submit">로그아웃</button>
+                        <form th:action="@{/logout}" method="post" class="logout-form">
+                            <button type="submit" class="logout-btn">로그아웃</button>
                         </form>
                     </div>
                 </div>
             </div>
 
-            <!-- 인기 게시글 랭킹 -->
+            <!-- 인기 게시글 -->
             <div id="ranking-section">
                 <h3>인기 게시글</h3>
                 <ul class="ranking-list">
-                    <li class="ranking-item">
-                        <span class="ranking-number">1</span>
-                        <a href="#" title="인기 게시글 제목입니다">인기 게시글 제목입니다</a>
-                        <span class="ranking-views">1.2k</span>
+                    <li th:each="popular, stat : ${popularPosts}" class="ranking-item">
+                        <span class="ranking-number" th:text="${stat.count}">1</span>
+                        <a th:href="@{/board/{boardId}/post/read(boardId=${popular.boardId}, id=${popular.id})}"
+                           th:text="${popular.title}">제목</a>
+                        <span class="ranking-views"
+                              th:text="${popular.viewCount >= 1000 ? (#numbers.formatDecimal(popular.viewCount / 1000.0, 1, 1) + 'k') : popular.viewCount}">1.2k</span>
                     </li>
                 </ul>
             </div>
 
         </aside>
+
     </div>
 
+    <!-- 푸터 -->
     <footer id="footer">
         <p><strong>백엔드 개발자 양성과정 2차 프로젝트</strong></p>
         <p>Community Platform © 2026 All rights reserved.</p>
     </footer>
 
 </div>
-
-<script>
-
-</script>
 
 </body>
 </html>
