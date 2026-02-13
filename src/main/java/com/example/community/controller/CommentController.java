@@ -72,9 +72,9 @@ public class CommentController {
 
         Map<String, Object> response = new HashMap<>();
 
-        boolean delete =  commentService.delete(commentId, userId);
+        boolean isDelete =  commentService.delete(commentId, userId);
 
-        if (!delete) {
+        if (!isDelete) {
             response.put("success", false);
             response.put("message", "권한이 없습니다.");
 
@@ -86,6 +86,7 @@ public class CommentController {
         return ResponseEntity.ok(response);
     }
 
+    // 특정 게시글 모든 댓글 조회
     @GetMapping
     public ResponseEntity<List<CommentDto>> readAll(
             @PathVariable Long postId

@@ -10,10 +10,15 @@ import java.util.List;
 import java.util.Optional;
 
 public interface CommentService {
+    // 댓글 등록
     Optional<CommentDto> create(CommentDto commentDto, Long userId);
+    // 댓글 조회
     Optional<CommentDto> read(Long id);
+    // 댓글 수정
     Optional<CommentDto> update(CommentDto commentDto, Long userId);
+    // 댓글 삭제
     boolean delete(Long id, Long userId);
+    // 게시물 별 댓글 목록
     List<CommentDto> getList(Long postId);
 
     // 전체 댓글 조회용

@@ -34,4 +34,11 @@ public interface CommentRepository extends JpaRepository<CommentEntity, Long> {
      * @return 댓글이 달린 페이지
      */
     Page<CommentEntity> findByUserId(Long userId, Pageable pageable);
+
+    /**
+     * 게시물의 댓글 최신순 정령
+     * @param postId 게시물 고유번호
+     * @return 최신순의로 정렬된 댓글 리스트
+     */
+    List<CommentEntity> findByPostEntityIdOrderByIdDesc(Long postId);
 }

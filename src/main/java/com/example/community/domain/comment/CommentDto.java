@@ -40,7 +40,6 @@ public class CommentDto {
                 .content(commentEntity.getContent())
                 .createdAt(commentEntity.getCreatedAt())
                 .updatedAt(commentEntity.getUpdatedAt())
-                .commentsCount(commentEntity.getCommentsCount())
                 .build();
     }
 
