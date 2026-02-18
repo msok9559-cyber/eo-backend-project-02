@@ -39,6 +39,7 @@ spring:
       pageable:
         default-page-size: 10
         one-indexed-parameters: true
+
   mail:
     host: smtp.gmail.com
     port: 587
@@ -54,3 +55,4 @@ spring:
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
+

@@ -1,41 +1,64 @@
-// Admin Dashboard JavaScript
-
+// 전역 변수
 let currentSection = 'users';
 let currentPage = 0;
 
-// 초기화
+//  초기화
 document.addEventListener('DOMContentLoaded', function () {
     loadAdminInfo();
-    loadUsers();
+    loadSection('users');
     setupMenuListeners();
     setupButtonListeners();
 });
 
-// 메뉴 클릭 이벤트
+// CSRF 토큰 처리
+function getCsrfToken() {
+    const token = document.querySelector('meta[name="_csrf"]');
+    const header = document.querySelector('meta[name="_csrf_header"]');
+
+    if (token && header) {
+        return {
+            token: token.getAttribute('content'),
+            header: header.getAttribute('content')
+        };
+    }
+    return null;
+}
+
+function fetchWithCsrf(url, options) {
+    options = options || {};
+    options.headers = options.headers || {};
+
+    const csrf = getCsrfToken();
+    if (csrf) {
+        options.headers[csrf.header] = csrf.token;
+    }
+
+    return fetch(url, options);
+}
+
+// 이벤트 리스너 설정
 function setupMenuListeners() {
     const menuItems = document.querySelectorAll('#menu-list > div');
     menuItems.forEach(function (item) {
         item.addEventListener('click', function () {
+            const section = this.dataset.section;
+            switchSection(section);
+
             // 메뉴 활성화
             menuItems.forEach(function (m) {
                 m.classList.remove('active');
             });
             this.classList.add('active');
-
-            // 섹션 전환
-            const section = this.dataset.section;
-            switchSection(section);
         });
     });
 }
 
-// 버튼 클릭 이벤트
 function setupButtonListeners() {
     document.getElementById('main-page-btn').addEventListener('click', goToMain);
     document.getElementById('logout-btn').addEventListener('click', logout);
 }
 
-// 메인 페이지로 이동 함수 추가
+//네비게이션
 function goToMain() {
     window.location.href = '/';
 }
@@ -46,7 +69,6 @@ function logout() {
     }
 }
 
-// 섹션 전환
 function switchSection(section) {
     currentSection = section;
     currentPage = 0;
@@ -58,53 +80,64 @@ function switchSection(section) {
     });
 
     // 선택된 섹션 보이기
-    document.getElementById(section + '-section').classList.add('active');
+    const targetSection = document.getElementById(section + '-section');
+    if (targetSection) {
+        targetSection.classList.add('active');
+    }
 
     // 데이터 로드
-    switch (section) {
-        case 'users':
-            loadUsers();
-            break;
-        case 'posts':
-            loadPosts();
-            break;
-        case 'comments':
-            loadComments();
-            break;
-    }
+    loadSection(section);
 }
 
+// 데이터 로드
+function loadSection(section) {
+    const config = {
+        users: {
+            url: '/admin/users',
+            render: renderUsersTable,
+            errorColspan: 7
+        },
+        posts: {
+            url: '/admin/posts',
+            render: renderPostsTable,
+            errorColspan: 6
+        },
+        comments: {
+            url: '/admin/comments',
+            render: renderCommentsTable,
+            errorColspan: 5
+        }
+    };
 
-// 관리자 정보
+    const sectionConfig = config[section];
+    if (!sectionConfig) return;
 
-
-function loadAdminInfo() {
-    document.getElementById('admin-name').textContent = '관리자';
-}
-
-function logout() {
-    if (confirm('로그아웃 하시겠습니까?')) {
-        window.location.href = '/logout';
-    }
-}
-
-
-// 사용자 관리
-
-
-function loadUsers() {
-    fetch('/admin/users?page=' + currentPage + '&size=20')
+    fetch(sectionConfig.url + '?page=' + currentPage + '&size=20')
         .then(function (response) {
             return response.json();
         })
         .then(function (data) {
-            renderUsersTable(data.content);
-            renderPagination('users', data);
+            sectionConfig.render(data.content);
+            renderPagination(section, data);
         })
         .catch(function (error) {
-            console.error('Error loading users:', error);
-            showError('users-tbody', 7, '사용자 목록을 불러올 수 없습니다.');
+            console.error('Error loading ' + section + ':', error);
+            showError(section + '-tbody', sectionConfig.errorColspan, section + ' 목록을 불러올 수 없습니다.');
         });
+}
+
+//  공통 렌더링 함수
+function createButton(text, className, onclick) {
+    return `<button class="${className}" onclick="${onclick}">${text}</button>`;
+}
+
+function createBadge(text, type) {
+    return `<span class="badge badge-${type}">${text}</span>`;
+}
+
+// 사용자 관리
+function loadAdminInfo() {
+    document.getElementById('admin-name').textContent = '관리자';
 }
 
 function renderUsersTable(users) {
@@ -117,25 +150,27 @@ function renderUsersTable(users) {
 
     let html = '';
     users.forEach(function (user) {
-        const roleClass = user.role === 'ADMIN' ? 'badge-primary' : 'badge-success';
-        const statusClass = user.active ? 'badge-success' : 'badge-danger';
+        const roleType = user.role === 'ADMIN' ? 'primary' : 'success';
+        const statusType = user.active ? 'success' : 'danger';
         const statusText = user.active ? '활성' : '비활성';
-        const roleButtonText = user.role === 'USER' ? '👑 관리자로' : '👤 사용자로';
-        const actionButtonText = user.active ? '🚫 정지' : '✅ 활성화';
+        const roleButtonText = user.role === 'USER' ? '관리자로' : '사용자로';
+        const actionButtonText = user.active ? '정지' : '활성화';
         const actionFunction = user.active ? 'banUser' : 'activateUser';
 
-        html += '<tr>';
-        html += '<td>' + user.username + '</td>';
-        html += '<td>' + user.name + '</td>';
-        html += '<td>' + user.email + '</td>';
-        html += '<td><span style="display:inline-block;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:500;background:#cce5ff;color:#004085;">' + user.role + '</span></td>';
-        html += '<td><span style="display:inline-block;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:500;background:' + (user.active ? '#d4edda' : '#f8d7da') + ';color:' + (user.active ? '#155724' : '#721c24') + ';">' + statusText + '</span></td>';
-        html += '<td>' + formatDate(user.createdAt) + '</td>';
-        html += '<td>';
-        html += '<button style="padding:5px 10px;font-size:12px;margin-right:5px;background:#5B87DE;color:white;border:none;border-radius:4px;cursor:pointer;" onclick="changeUserRole(' + user.id + ', \'' + user.role + '\')">' + roleButtonText + '</button>';
-        html += '<button style="padding:5px 10px;font-size:12px;background:' + (user.active ? '#ff4444' : '#00C851') + ';color:white;border:none;border-radius:4px;cursor:pointer;" onclick="' + actionFunction + '(' + user.id + ')">' + actionButtonText + '</button>';
-        html += '</td>';
-        html += '</tr>';
+        html += `
+            <tr>
+                <td>${user.username}</td>
+                <td>${user.name}</td>
+                <td>${user.email}</td>
+                <td>${createBadge(user.role, roleType)}</td>
+                <td>${createBadge(statusText, statusType)}</td>
+                <td>${formatDate(user.createdAt)}</td>
+                <td>
+                    ${createButton(roleButtonText, 'btn-primary', `changeUserRole(${user.id}, '${user.role}')`)}
+                    ${createButton(actionButtonText, user.active ? 'btn-danger' : 'btn-success', `${actionFunction}(${user.id})`)}
+                </td>
+            </tr>
+        `;
     });
 
     tbody.innerHTML = html;
@@ -147,7 +182,7 @@ function changeUserRole(userId, currentRole) {
 
     if (!reason) return;
 
-    fetch('/admin/users/' + userId + '/role?role=' + newRole + '&reason=' + encodeURIComponent(reason), {
+    fetchWithCsrf('/admin/users/' + userId + '/role?role=' + newRole + '&reason=' + encodeURIComponent(reason), {
         method: 'PATCH'
     })
         .then(function (response) {
@@ -156,7 +191,7 @@ function changeUserRole(userId, currentRole) {
         .then(function (data) {
             if (data.success) {
                 alert(data.message);
-                loadUsers();
+                loadSection('users');
             } else {
                 alert(data.message);
             }
@@ -176,14 +211,14 @@ function banUser(userId) {
     let url = '/admin/users/' + userId + '/ban?reason=' + encodeURIComponent(reason);
     if (duration) url += '&duration=' + duration;
 
-    fetch(url, {method: 'POST'})
+    fetchWithCsrf(url, { method: 'POST' })
         .then(function (response) {
             return response.json();
         })
         .then(function (data) {
             if (data.success) {
                 alert(data.message);
-                loadUsers();
+                loadSection('users');
             } else {
                 alert(data.message);
             }
@@ -197,14 +232,14 @@ function banUser(userId) {
 function activateUser(userId) {
     if (!confirm('사용자를 활성화하시겠습니까?')) return;
 
-    fetch('/admin/users/' + userId + '/activate', {method: 'POST'})
+    fetchWithCsrf('/admin/users/' + userId + '/activate', { method: 'POST' })
         .then(function (response) {
             return response.json();
         })
         .then(function (data) {
             if (data.success) {
                 alert(data.message);
-                loadUsers();
+                loadSection('users');
             } else {
                 alert(data.message);
             }
@@ -215,25 +250,7 @@ function activateUser(userId) {
         });
 }
 
-
 // 게시물 관리
-
-
-function loadPosts() {
-    fetch('/admin/posts?page=' + currentPage + '&size=20')
-        .then(function (response) {
-            return response.json();
-        })
-        .then(function (data) {
-            renderPostsTable(data.content);
-            renderPagination('posts', data);
-        })
-        .catch(function (error) {
-            console.error('Error loading posts:', error);
-            showError('posts-tbody', 6, '게시물 목록을 불러올 수 없습니다.');
-        });
-}
-
 function renderPostsTable(posts) {
     const tbody = document.getElementById('posts-tbody');
 
@@ -244,16 +261,16 @@ function renderPostsTable(posts) {
 
     let html = '';
     posts.forEach(function (post) {
-        html += '<tr>';
-        html += '<td>' + post.title + '</td>';
-        html += '<td>' + (post.writer || 'Unknown') + '</td>';
-        html += '<td>' + post.boardId + '</td>';
-        html += '<td>' + post.viewCount + '</td>';
-        html += '<td>' + formatDate(post.createdAt) + '</td>';
-        html += '<td>';
-        html += '<button style="padding:5px 10px;font-size:12px;background:#ff4444;color:white;border:none;border-radius:4px;cursor:pointer;" onclick="deletePost(' + post.id + ')">🗑️ 삭제</button>';
-        html += '</td>';
-        html += '</tr>';
+        html += `
+            <tr>
+                <td>${post.title}</td>
+                <td>${post.writer || 'Unknown'}</td>
+                <td>${post.boardId}</td>
+                <td>${post.viewCount}</td>
+                <td>${formatDate(post.createdAt)}</td>
+                <td>${createButton('삭제', 'btn-danger', `deletePost(${post.id})`)}</td>
+            </tr>
+        `;
     });
 
     tbody.innerHTML = html;
@@ -262,14 +279,14 @@ function renderPostsTable(posts) {
 function deletePost(postId) {
     if (!confirm('정말 삭제하시겠습니까?')) return;
 
-    fetch('/admin/posts/' + postId, {method: 'DELETE'})
+    fetchWithCsrf('/admin/posts/' + postId, { method: 'DELETE' })
         .then(function (response) {
             return response.json();
         })
         .then(function (data) {
             if (data.success) {
                 alert(data.message);
-                loadPosts();
+                loadSection('posts');
             } else {
                 alert(data.message);
             }
@@ -280,25 +297,7 @@ function deletePost(postId) {
         });
 }
 
-
 // 댓글 관리
-
-
-function loadComments() {
-    fetch('/admin/comments?page=' + currentPage + '&size=20')
-        .then(function (response) {
-            return response.json();
-        })
-        .then(function (data) {
-            renderCommentsTable(data.content);
-            renderPagination('comments', data);
-        })
-        .catch(function (error) {
-            console.error('Error loading comments:', error);
-            showError('comments-tbody', 5, '댓글 목록을 불러올 수 없습니다.');
-        });
-}
-
 function renderCommentsTable(comments) {
     const tbody = document.getElementById('comments-tbody');
 
@@ -309,15 +308,15 @@ function renderCommentsTable(comments) {
 
     let html = '';
     comments.forEach(function (comment) {
-        html += '<tr>';
-        html += '<td>' + escapeHtml(comment.content) + '</td>';
-        html += '<td>' + (comment.writer || 'Unknown') + '</td>';
-        html += '<td>' + comment.postId + '</td>';
-        html += '<td>' + formatDate(comment.createdAt) + '</td>';
-        html += '<td>';
-        html += '<button style="padding:5px 10px;font-size:12px;background:#ff4444;color:white;border:none;border-radius:4px;cursor:pointer;" onclick="deleteComment(' + comment.id + ')">🗑️ 삭제</button>';
-        html += '</td>';
-        html += '</tr>';
+        html += `
+            <tr>
+                <td>${escapeHtml(comment.content)}</td>
+                <td>${comment.writer || 'Unknown'}</td>
+                <td>${comment.postId}</td>
+                <td>${formatDate(comment.createdAt)}</td>
+                <td>${createButton('삭제', 'btn-danger', `deleteComment(${comment.id})`)}</td>
+            </tr>
+        `;
     });
 
     tbody.innerHTML = html;
@@ -326,14 +325,14 @@ function renderCommentsTable(comments) {
 function deleteComment(commentId) {
     if (!confirm('정말 삭제하시겠습니까?')) return;
 
-    fetch('/admin/comments/' + commentId, {method: 'DELETE'})
+    fetchWithCsrf('/admin/comments/' + commentId, { method: 'DELETE' })
         .then(function (response) {
             return response.json();
         })
         .then(function (data) {
             if (data.success) {
                 alert(data.message);
-                loadComments();
+                loadSection('comments');
             } else {
                 alert(data.message);
             }
@@ -344,10 +343,7 @@ function deleteComment(commentId) {
         });
 }
 
-
 // 유틸리티 함수
-
-
 function formatDate(dateString) {
     if (!dateString) return '-';
     const date = new Date(dateString);
@@ -360,6 +356,12 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+function showError(tbodyId, colspan, message) {
+    const tbody = document.getElementById(tbodyId);
+    tbody.innerHTML = '<tr><td colspan="' + colspan + '">' + message + '</td></tr>';
+}
+
+// 페이지네이션
 function renderPagination(section, data) {
     const container = document.getElementById(section + '-pagination');
     if (!container) return;
@@ -370,19 +372,16 @@ function renderPagination(section, data) {
     let html = '';
 
     if (currentPageNum > 0) {
-        html += '<button onclick="goToPage(\'' + section + '\', ' + (currentPageNum - 1) + ')">‹</button>';
+        html += `<button onclick="goToPage('${section}', ${currentPageNum - 1})">‹</button>`;
     }
 
     for (let i = 0; i < totalPages; i++) {
-        if (i === currentPageNum) {
-            html += '<button class="active">' + (i + 1) + '</button>';
-        } else {
-            html += '<button onclick="goToPage(\'' + section + '\', ' + i + ')">' + (i + 1) + '</button>';
-        }
+        const activeClass = i === currentPageNum ? ' class="active"' : '';
+        html += `<button${activeClass} onclick="goToPage('${section}', ${i})">${i + 1}</button>`;
     }
 
     if (currentPageNum < totalPages - 1) {
-        html += '<button onclick="goToPage(\'' + section + '\', ' + (currentPageNum + 1) + ')">›</button>';
+        html += `<button onclick="goToPage('${section}', ${currentPageNum + 1})">›</button>`;
     }
 
     container.innerHTML = html;
@@ -390,21 +389,5 @@ function renderPagination(section, data) {
 
 function goToPage(section, page) {
     currentPage = page;
-
-    switch (section) {
-        case 'users':
-            loadUsers();
-            break;
-        case 'posts':
-            loadPosts();
-            break;
-        case 'comments':
-            loadComments();
-            break;
-    }
-}
-
-function showError(tbodyId, colspan, message) {
-    const tbody = document.getElementById(tbodyId);
-    tbody.innerHTML = '<tr><td colspan="' + colspan + '">' + message + '</td></tr>';
+    loadSection(section);
 }

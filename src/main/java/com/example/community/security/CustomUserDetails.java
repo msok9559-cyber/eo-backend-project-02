@@ -5,22 +5,33 @@ import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Spring Security의 UserDetails 구현체
  * 인증된 사용자의 정보를 담는 객체입니다.
  */
 @Getter
-public class CustomUserDetails implements UserDetails {
+public class CustomUserDetails implements UserDetails, OAuth2User {
 
     private final UserEntity user;
+    private Map<String, Object> attributes;
 
+    // 일반 로그인용 생성자
     public CustomUserDetails(UserEntity user) {
         this.user = user;
+    }
+
+    // OAuth2 로그인용 생성자
+    public CustomUserDetails(UserEntity user, Map<String, Object> attributes) {
+        this.user = user;
+        this.attributes = attributes;
     }
 
     /**
@@ -83,5 +94,15 @@ public class CustomUserDetails implements UserDetails {
         return user.getId();
     }
 
+    // OAuth2User 인터페이스 구현
 
+    @Override
+    public Map<String, Object> getAttributes() {
+        return attributes != null ? attributes : new HashMap<>();
+    }
+
+    @Override
+    public String getName() {
+        return user.getName();
+    }
 }

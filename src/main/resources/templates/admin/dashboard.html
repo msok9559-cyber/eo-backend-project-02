@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>관리자 대시보드 - 걸어서 맛집으로</title>
+
+    <!--  csrf 토큰 추가   -->
+    <meta name="_csrf" th:content="${_csrf?.token}">
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}">
+
     <link rel="stylesheet" href="/css/dashboard.css">
     <script src="/js/dashboard.js" defer></script>
 </head>

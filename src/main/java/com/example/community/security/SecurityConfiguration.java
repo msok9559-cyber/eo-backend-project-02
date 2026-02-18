@@ -22,6 +22,8 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 public class SecurityConfiguration {
 
     private final CustomUserDetailsService customUserDetailsService;
+    private final com.example.community.security.CustomOAuth2UserService customOAuth2UserService;
+
 
     /**
      * Spring Security 프레임워크의 SecurityFilterChain을 적용하지 않을 요청을 전역적으로 지정
@@ -48,6 +50,23 @@ public class SecurityConfiguration {
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
                         .defaultSuccessUrl("/", true)
+                        .permitAll()
+                );
+
+        // 소셜 로그인 인가 설정
+        httpSecurity
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/", true)
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                        )
+                );
+
+        httpSecurity
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout")
                         .permitAll()
                 );
 
@@ -98,11 +117,4 @@ public class SecurityConfiguration {
                 request.getRequestDispatcher("/error/403").forward(request, response);
     }
 
-    /**
-     * 사용자가 입력한 비밀번호를 암호화할 PasswordEncoder를 빈(bean)으로 등록
-     */
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 }
