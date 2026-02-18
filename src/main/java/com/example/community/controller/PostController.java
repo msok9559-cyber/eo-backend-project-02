@@ -191,7 +191,7 @@ public class PostController {
         return "post/write";
     }
 
-    @GetMapping("/delete")
+    @PostMapping("/delete")
     public String delete(@PathVariable Long boardId, @RequestParam Long id, Criteria criteria,
                          RedirectAttributes redirectAttributes,
                          @AuthenticationPrincipal CustomUserDetails userDetails) {
