@@ -12,7 +12,7 @@
 
 <div id="messengerWrapper">
     <nav id="sideMenu">
-        <h1 th:text="${#authentication.name} + '의 쪽지함'">사용자</h1>
+        <h1 th:text="${#authentication.principal.nickname} + '의 쪽지함'">사용자</h1>
         <ul>
             <li><a th:href="@{/messages/all}" class="menuItem" th:classappend="${currentType == 'all'} ? 'active'">전체 쪽지함</a></li>
             <li><a th:href="@{/messages/received}" class="menuItem" th:classappend="${currentType == 'received'} ? 'active'">

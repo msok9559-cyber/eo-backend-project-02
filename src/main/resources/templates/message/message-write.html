@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>쪽지 쓰기 - 커뮤니티</title>
+    <meta name="_csrf" th:content="${_csrf?.token}">
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}">
     <link rel="stylesheet" href="/css/reset.css">
     <link rel="stylesheet" href="/css/message.css">
     <link rel="stylesheet" href="/css/message-write.css">
@@ -12,7 +14,7 @@
 <body class="popupBody">
 <div id="messengerWrapper">
     <nav id="sideMenu">
-        <h1 th:text="${#authentication.name} + '의 쪽지함'">사용자</h1>
+        <h1 th:text="${#authentication.principal.nickname} + '의 쪽지함'">사용자</h1>
         <ul>
             <li><a th:href="@{/messages/all}" class="menuItem">전체 쪽지함</a></li>
             <li><a th:href="@{/messages/received}" class="menuItem" th:classappend="${currentType == 'received'} ? 'active'">

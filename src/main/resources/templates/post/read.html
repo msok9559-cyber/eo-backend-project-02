@@ -37,23 +37,19 @@
         <!-- 왼쪽 사이드바 -->
         <aside id="left-sidebar">
 
-            <!-- 공지사항 -->
-            <div class="sidebar-section">
+            <!--  공지사항 추가/수정 섹션 -->
+            <div class="sidebar-section" sec:authorize="hasRole('ADMIN')">
                 <h3>
                     공지사항
-                    <button type="button"
-                            class="add-board-btn"
-                            onclick="openBoardPopup('/board/write?category=NOTICE');">
+                    <button type="button" class="add-board-btn" onclick="openBoardPopup('/board/write?category=NOTICE');">
                         <span>공지 카테고리 추가</span>
                     </button>
                 </h3>
-
                 <ul class="sidebar-menu">
                     <li th:each="board : ${noticeBoardList}">
                         <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
                            th:text="${board.title}">공지</a>
-                        <button type="button"
-                                class="board-manage-btn"
+                        <button type="button" class="board-manage-btn"
                                 th:attr="onclick=|openBoardPopup('/board/update?id=${board.id}')|">
                             <span>관리</span>
                         </button>
@@ -61,26 +57,45 @@
                 </ul>
             </div>
 
-            <!-- 게시판 -->
-            <div class="sidebar-section">
+            <!-- 일반 사용자용 공지사항 -->
+            <div class="sidebar-section" sec:authorize="!hasRole('ADMIN')">
+                <h3>공지사항</h3>
+                <ul class="sidebar-menu">
+                    <li th:each="board : ${noticeBoardList}">
+                        <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
+                           th:text="${board.title}">공지</a>
+                    </li>
+                </ul>
+            </div>
+
+
+            <!-- 게시판 관리자 -->
+            <div class="sidebar-section" sec:authorize="hasRole('ADMIN')">
                 <h3>
                     게시판
-                    <button type="button"
-                            class="add-board-btn"
-                            onclick="openBoardPopup('/board/write');">
+                    <button type="button" class="add-board-btn" onclick="openBoardPopup('/board/write');">
                         <span>게시판 추가</span>
                     </button>
                 </h3>
-
                 <ul class="sidebar-menu">
                     <li th:each="board : ${boardList}">
                         <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
                            th:text="${board.title}">게시판</a>
-                        <button type="button"
-                                class="board-manage-btn"
+                        <button type="button" class="board-manage-btn"
                                 th:attr="onclick=|openBoardPopup('/board/update?id=${board.id}')|">
                             <span>관리</span>
                         </button>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 일반 사용자용 게시판 섹션 (조회만) -->
+            <div class="sidebar-section" sec:authorize="!hasRole('ADMIN')">
+                <h3>게시판</h3>
+                <ul class="sidebar-menu">
+                    <li th:each="board : ${boardList}">
+                        <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
+                           th:text="${board.title}">게시판</a>
                     </li>
                 </ul>
             </div>
@@ -105,7 +120,7 @@
                         <span th:text="*{#temporals.format(createdAt,'yyyy-MM-dd HH:mm')}">date</span>
                         <span>조회 <strong th:text="*{viewCount}">0</strong></span>
                         <span>좋아요 <strong th:text="*{likesCount}">0</strong></span>
-                        <span>댓글 <strong th:text="*{commentsCount}">0</strong></span>
+                        <span>댓글 <strong id="topCommentCount" th:text="*{commentsCount}">0</strong></span>
                     </div>
 
                     <div class="post-content" th:text="*{content}">내용</div>
@@ -197,7 +212,7 @@
             <!-- 로그인 -->
             <div id="auth-box2" sec:authorize="isAuthenticated()">
                 <div class="user-info">
-                    <p><span sec:authentication="name">사용자</span>님</p>
+                    <p><span sec:authentication="principal.nickname">사용자</span>님</p>
                     <div class="profile-links">
                         <a th:href="@{/mypage}">마이페이지</a>
                         <a th:href="@{/messages/all}" onclick="openMessagePopup(this.href); return false;">쪽지함</a>

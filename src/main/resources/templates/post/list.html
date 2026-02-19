@@ -29,33 +29,34 @@
 
         <!-- 왼쪽 사이드바 -->
         <aside id="left-sidebar">
-            <!-- 공지사항 -->
-            <div class="sidebar-section">
+            <!-- 공지사항 추가/수정 관리자 -->
+            <div class="sidebar-section" sec:authorize="hasRole('ADMIN')">
                 <h3>
                     공지사항
-
-                    <!-- (임시) 공지 카테고리 추가 버튼 -->
-                    <button type="button"
-                            class="add-board-btn"
-                            onclick="openBoardPopup('/board/write?category=NOTICE');">
+                    <button type="button" class="add-board-btn" onclick="openBoardPopup('/board/write?category=NOTICE');">
                         <span>공지 카테고리 추가</span>
                     </button>
                 </h3>
-
                 <ul class="sidebar-menu">
                     <li th:each="board : ${noticeBoardList}">
                         <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
                            th:text="${board.title}">공지 카테고리</a>
-
-                        <!-- (임시) 공지 카테고리 관리 버튼 -->
-                        <button type="button"
-                                class="board-manage-btn"
-                                aria-label="공지 카테고리 관리"
+                        <button type="button" class="board-manage-btn"
                                 th:attr="onclick=|openBoardPopup('/board/update?id=${board.id}')|">
                             <span>공지 카테고리 버튼</span>
                         </button>
                     </li>
+                </ul>
+            </div>
 
+            <!-- 일반 사용자용 공지사항 -->
+            <div class="sidebar-section" sec:authorize="!hasRole('ADMIN')">
+                <h3>공지사항</h3>
+                <ul class="sidebar-menu">
+                    <li th:each="board : ${noticeBoardList}">
+                        <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
+                           th:text="${board.title}">공지 카테고리</a>
+                    </li>
                     <li th:if="${noticeBoardList == null || #lists.isEmpty(noticeBoardList)}">
                         <span>등록된 공지 카테고리가 없습니다.</span>
                     </li>
@@ -63,35 +64,33 @@
             </div>
 
 
-            <!-- 게시판 목록 -->
-            <div class="sidebar-section">
+            <!-- 게시판 목록 관리자-->
+            <div class="sidebar-section" sec:authorize="hasRole('ADMIN')">
                 <h3>
                     게시판
-
-                    <!-- (임시) 게시판 추가 버튼 -->
-                    <button type="button"
-                            class="add-board-btn"
-                            onclick="openBoardPopup('/board/write');">
+                    <button type="button" class="add-board-btn" onclick="openBoardPopup('/board/write');">
                         <span>게시판 추가</span>
                     </button>
                 </h3>
-
                 <ul class="sidebar-menu">
                     <li th:each="board : ${boardList}">
                         <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
                            th:text="${board.title}">게시판</a>
-
-                        <!-- 게시판 관리 버튼 (임시) -->
-                        <button type="button"
-                                class="board-manage-btn"
-                                aria-label="게시판 관리"
+                        <button type="button" class="board-manage-btn"
                                 th:attr="onclick=|openBoardPopup('/board/update?id=${board.id}')|">
                             <span>게시판 관리 버튼</span>
                         </button>
                     </li>
+                </ul>
+            </div>
 
-                    <li th:if="${boardList == null || #lists.isEmpty(boardList)}">
-                        <span>등록된 게시판이 없습니다.</span>
+            <!-- 일반 사용자용 게시판 섹션 (조회만) -->
+            <div class="sidebar-section" sec:authorize="!hasRole('ADMIN')">
+                <h3>게시판</h3>
+                <ul class="sidebar-menu">
+                    <li th:each="board : ${boardList}">
+                        <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
+                           th:text="${board.title}">게시판</a>
                     </li>
                 </ul>
             </div>
@@ -237,7 +236,7 @@
             <!-- 로그인 후: 사용자 정보 (로그인 폼과 같은 위치) -->
             <div id="auth-box2" sec:authorize="isAuthenticated()">
                 <div class="user-info">
-                    <p><span sec:authentication="name">사용자</span>님</p>
+                    <p><span sec:authentication="principal.nickname">사용자</span>님</p>
                     <div class="profile-links">
                         <a th:href="@{/mypage}">마이페이지</a>
                         <a href="javascript:void(0);"

@@ -79,7 +79,7 @@ public class MainController {
         }
 
         // 4) 게시글 목록 조회 (검색 또는 전체)
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "id"));
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "viewCount"));
         Page<PostDto> postPage;
 
         if (keyword != null && !keyword.trim().isEmpty()) {

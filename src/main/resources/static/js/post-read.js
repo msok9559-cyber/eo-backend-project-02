@@ -1,4 +1,5 @@
-// post-read.js - 댓글 기능 (admin-dashboard.js 스타일)
+// post-read.js - 댓글 기능 (완전한 버전)
+// 댓글 작성/수정/삭제 및 실시간 댓글 수 업데이트
 
 // 페이지 로드 시 실행
 document.addEventListener('DOMContentLoaded', function() {
@@ -25,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // DOM 요소
     var commentList = document.getElementById('commentList');
     var commentCount = document.getElementById('commentCount');
+    var topCommentCount = document.getElementById('topCommentCount');
     var newComment = document.getElementById('newComment');
     var btnCreateComment = document.getElementById('btnCreateComment');
     var commentError = document.getElementById('commentError');
@@ -88,7 +90,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 댓글 목록 렌더링
     function renderComments(comments) {
+        // 하단 댓글수 업데이트
         commentCount.textContent = comments.length;
+
+        // 상단 댓글수 업데이트
+        if (topCommentCount) {
+            topCommentCount.textContent = comments.length;
+        }
 
         if (!comments || comments.length === 0) {
             commentList.innerHTML = '<div class="empty-comment">아직 댓글이 없습니다.</div>';
@@ -163,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // 댓글 등록
+    // 댓글 등록 (성공 후 loadComments() 호출)
     function createComment() {
         var content = newComment.value.trim();
 
@@ -201,6 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(function(data) {
                 newComment.value = '';
+                // 댓글 목록 다시 로드 → 댓글 수 자동 업데이트
                 loadComments();
             })
             .catch(function(error) {
@@ -232,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
         contentDiv.style.display = 'block';
     };
 
-    // 댓글 수정 저장
+    // 댓글 수정 저장 (성공 후 loadComments() 호출)
     window.saveEdit = function(button, commentId) {
         var commentItem = button.closest('.comment-item');
         var textarea = commentItem.querySelector('.comment-editbox textarea');
@@ -260,6 +269,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(function(data) {
+                // 댓글 목록 다시 로드 → 댓글 수 자동 업데이트
                 loadComments();
             })
             .catch(function(error) {
@@ -268,7 +278,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     };
 
-    // 댓글 삭제
+    // 댓글 삭제 (성공 후 loadComments() 호출)
     window.deleteComment = function(commentId) {
         if (!confirm('댓글을 삭제할까요?')) return;
 
@@ -285,6 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(function(data) {
                 if (data.success) {
+                    // 댓글 목록 다시 로드 → 댓글 수 자동 업데이트
                     loadComments();
                 } else {
                     alert(data.message || '댓글 삭제에 실패했습니다.');

@@ -4,21 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>글쓰기</title>
+    <title th:text="${title}">글쓰기</title>
 
     <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/post-write.css">
     <script src="/js/index.js" defer></script>
+    <script src="/js/post-write.js" defer></script>
 
     <!-- CSRF(만약 Security에서 csrf 활성화라면 필요) -->
     <meta name="_csrf" th:content="${_csrf?.token}">
     <meta name="_csrf_header" th:content="${_csrf?.headerName}">
-
-
 </head>
 
 <body>
 <div id="wrapper">
-
 
     <header id="header">
         <div id="logo">
@@ -32,37 +31,65 @@
     <div id="main-layout">
 
         <aside id="left-sidebar">
-            <div class="sidebar-section">
+            <!-- 공지사항 추가/수정 관리자 -->
+            <div class="sidebar-section" sec:authorize="hasRole('ADMIN')">
                 <h3>
                     공지사항
-                    <a th:href="@{/admin/board/create(category='NOTICE')}"
-                       class="add-board-btn"
-                       aria-label="공지사항 추가"
-                       sec:authorize="hasRole('ADMIN')">
+                    <button type="button" class="add-board-btn" onclick="openBoardPopup('/board/write?category=NOTICE');">
                         <span>공지 카테고리 추가</span>
-                    </a>
+                    </button>
                 </h3>
                 <ul class="sidebar-menu">
                     <li th:each="board : ${noticeBoardList}">
                         <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
                            th:text="${board.title}">공지 카테고리</a>
+                        <button type="button" class="board-manage-btn"
+                                th:attr="onclick=|openBoardPopup('/board/update?id=${board.id}')|">
+                            <span>공지 카테고리 관리 버튼</span>
+                        </button>
                     </li>
+                </ul>
+            </div>
 
+            <!-- 일반 사용자용 공지사항 -->
+            <div class="sidebar-section" sec:authorize="!hasRole('ADMIN')">
+                <h3>공지사항</h3>
+                <ul class="sidebar-menu">
+                    <li th:each="board : ${noticeBoardList}">
+                        <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
+                           th:text="${board.title}">공지 카테고리</a>
+                    </li>
                     <li th:if="${noticeBoardList == null || #lists.isEmpty(noticeBoardList)}">
                         <span>등록된 공지 카테고리가 없습니다.</span>
                     </li>
                 </ul>
             </div>
 
-            <div class="sidebar-section">
-                <h3> 게시판
-                    <a th:href="@{/admin/board/create}"
-                       class="add-board-btn"
-                       aria-label="게시판 추가"
-                       sec:authorize="hasRole('ADMIN')">
+            <!-- 게시판 추가/수정 관리자 -->
+            <div class="sidebar-section" sec:authorize="hasRole('ADMIN')">
+                <h3>
+                    게시판
+                    <button type="button" class="add-board-btn" onclick="openBoardPopup('/board/write');">
                         <span>게시판 추가</span>
-                    </a>
+                    </button>
                 </h3>
+                <ul class="sidebar-menu">
+                    <th:block th:each="board : ${boardList}">
+                        <li>
+                            <a th:href="@{/board/{boardId}/post/list(boardId=${board.id})}"
+                               th:text="${board.title}">게시판</a>
+                            <button type="button" class="board-manage-btn"
+                                    th:attr="onclick=|openBoardPopup('/board/update?id=${board.id}')|">
+                                <span>게시판 관리 버튼</span>
+                            </button>
+                        </li>
+                    </th:block>
+                </ul>
+            </div>
+
+            <!-- 일반 사용자용 게시판 -->
+            <div class="sidebar-section" sec:authorize="!hasRole('ADMIN')">
+                <h3>게시판</h3>
                 <ul class="sidebar-menu">
                     <th:block th:each="board : ${boardList}">
                         <li>
@@ -74,34 +101,37 @@
             </div>
         </aside>
 
-
         <main id="main-content">
 
             <div class="write-box">
-                <div class="write-title">글쓰기</div>
+
+                <div class="write-title" th:text="${title}">글쓰기</div>
 
                 <!-- 작성자 표시만(입력 X) -->
-                <div class="write-meta">
+                <div class="write-meta" sec:authorize="isAuthenticated()">
                     <span><strong>작성자:</strong>
-                        <span sec:authentication="name">사용자</span>
+                        <span sec:authentication="principal.nickname">사용자</span>
                     </span>
                 </div>
 
-
                 <form id="writeForm"
-                      th:action="@{/board/{boardId}/post/write(boardId=${boardId})}"
+                      th:action="${action}"
                       method="post"
                       sec:authorize="isAuthenticated()">
 
                     <div class="form-row">
                         <label for="title">제목</label>
+                        <!-- 기존 제목 데이터 불러오기 -->
                         <input id="title" type="text" name="title" maxlength="100"
+                               th:value="${postDto?.title}"
                                placeholder="제목을 입력하세요 (1~100자)" required>
                     </div>
 
                     <div class="form-row">
                         <label for="content">내용</label>
+                        <!-- 기존 내용 데이터 불러오기 -->
                         <textarea id="content" name="content" maxlength="5000"
+                                  th:text="${postDto?.content}"
                                   placeholder="내용을 입력하세요 (1~5000자)" required></textarea>
                         <div class="help">※ 작성자는 로그인 사용자로 자동 저장됩니다.</div>
                     </div>
@@ -113,7 +143,8 @@
                            th:href="@{/board/{boardId}/post/list(boardId=${boardId})}">
                             취소
                         </a>
-                        <button type="submit" class="btn btn-primary">등록</button>
+                        <button type="submit" class="btn btn-primary"
+                                th:text="${title != null and title.contains('Update')} ? '수정' : '등록'">등록</button>
                     </div>
                 </form>
 
@@ -149,7 +180,7 @@
 
             <div id="auth-box2" sec:authorize="isAuthenticated()">
                 <div class="user-info">
-                    <p><span sec:authentication="name">사용자</span>님</p>
+                    <p><span sec:authentication="principal.nickname">사용자</span>님</p>
                     <div class="profile-links">
                         <a th:href="@{/mypage}">마이페이지</a>
                         <a th:href="@{/messages}">쪽지함</a>
@@ -181,10 +212,6 @@
     </footer>
 
 </div>
-
-<script>
-
-</script>
 
 </body>
 </html>
