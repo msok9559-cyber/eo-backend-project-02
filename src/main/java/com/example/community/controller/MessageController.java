@@ -18,6 +18,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -155,30 +156,70 @@ public class MessageController {
 
     /**
      * 선택 삭제 - 휴지통 이동 (Bulk API)
+     * 타입 변환 적용
      */
     @PostMapping("/api/trash/bulk")
     @ResponseBody
-    public ResponseEntity<Void> moveToTrashBulk(@RequestBody Map<String, List<Long>> request) {
+    public ResponseEntity<Void> moveToTrashBulk(@RequestBody Map<String, Object> request) {
         String username = getCurrentUsername();
-        List<Long> ids = request.get("ids");
-        if (ids != null) {
-            ids.forEach(id -> messageService.moveToTrash(id, username, "received"));
+        String userType = (String) request.getOrDefault("userType", "received");
+
+        // 타입 변환: Object → Long
+        List<Long> ids = convertToLongList(request.get("ids"));
+
+        log.info("moveToTrashBulk - username={}, userType={}, ids={}", username, userType, ids);
+
+        if (!ids.isEmpty()) {
+            ids.forEach(id -> messageService.moveToTrash(id, username, userType));
         }
         return ResponseEntity.ok().build();
     }
 
     /**
      * 선택 삭제 - 영구 삭제 (Bulk API)
+     * 타입 변환 적용
      */
     @PostMapping("/api/delete/bulk")
     @ResponseBody
-    public ResponseEntity<Void> deleteBulk(@RequestBody Map<String, List<Long>> request) {
+    public ResponseEntity<Void> deleteBulk(@RequestBody Map<String, Object> request) {
         String username = getCurrentUsername();
-        List<Long> ids = request.get("ids");
-        if (ids != null) {
-            ids.forEach(id -> messageService.permanentDelete(id, username, "received"));
+        String userType = (String) request.getOrDefault("userType", "received");
+
+        // 타입 변환: Object → Long
+        List<Long> ids = convertToLongList(request.get("ids"));
+
+        log.info("deleteBulk - username={}, userType={}, ids={}", username, userType, ids);
+
+        if (!ids.isEmpty()) {
+            ids.forEach(id -> messageService.permanentDelete(id, username, userType));
         }
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Object를 List<Long>으로 안전하게 변환
+     * JSON 배열 → List<Object> → List<Long>
+     */
+    private List<Long> convertToLongList(Object obj) {
+        List<Long> result = new ArrayList<>();
+
+        if (obj instanceof List) {
+            ((List<?>) obj).forEach(item -> {
+                try {
+                    if (item instanceof Number) {
+                        // Integer, Long, Double 등 Number 타입
+                        result.add(((Number) item).longValue());
+                    } else {
+                        // String 타입
+                        result.add(Long.parseLong(item.toString()));
+                    }
+                } catch (NumberFormatException e) {
+                    log.error("숫자 변환 실패: {}", item, e);
+                }
+            });
+        }
+
+        return result;
     }
 
     /**

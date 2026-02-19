@@ -47,7 +47,8 @@
                 <div th:each="msg : ${messages.content}"
                      class="messageRow"
                      th:classappend="${msg.type == 'RECEIVED' && msg.isRead == 0} ? 'unread' : ''"
-                     th:data-id="${msg.id}">
+                     th:data-id="${msg.id}"
+                     th:data-type="${msg.type}">
                     <div class="checkCell">
                         <input type="checkbox" class="rowCheck">
                     </div>

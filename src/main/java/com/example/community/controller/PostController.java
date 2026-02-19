@@ -146,7 +146,7 @@ public class PostController {
         model.addAttribute("criteria", criteria);
         model.addAttribute("postDto", postService.read(id));
 
-        // 🔧 현재 사용자 ID와 관리자 여부를 Model에 추가 (댓글 기능용)
+        // 현재 사용자 ID와 관리자 여부를 Model에 추가 (댓글 기능용)
         Long currentUserId = null;
         boolean isAdmin = false;
         if (userDetails != null) {
