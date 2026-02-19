@@ -42,9 +42,3 @@ spring:
       pageable:
         default-page-size: 10
         one-indexed-parameters: true
-
-  server:
-    error:
-      include-message: always
-      include-stacktrace: always
-      include-exception: true

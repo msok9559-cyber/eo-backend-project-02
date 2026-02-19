@@ -1,6 +1,9 @@
 
 document.addEventListener('DOMContentLoaded', function() {
 
+    var csrfToken = document.querySelector("meta[name='_csrf']").content;
+    var csrfHeader = document.querySelector("meta[name='_csrf_header']").content;
+
     // DOM 요소
     var emailInput = document.getElementById('email');
     var verifyEmailBtn = document.getElementById('verify-email');
@@ -22,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 에러 메시지 표시
     function showError(message) {
         errorMessage.textContent = message;
+        errorMessage.className = '';
         errorMessage.style.display = 'block';
     }
 
@@ -57,13 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
         verifyEmailBtn.disabled = true;
         verifyEmailBtn.textContent = '발송중...';
 
-        fetch('/api/email/send-verification', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email: email })
-        })
+        fetch('/api/email/send-verification?email=' + encodeURIComponent(email))
             .then(function(response) {
                 return response.json();
             })
@@ -103,16 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
         verifyConfirmBtn.disabled = true;
         verifyConfirmBtn.textContent = '확인중...';
 
-        fetch('/api/email/verify-code', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                email: currentEmail,
-                code: code
-            })
-        })
+        fetch('/api/email/verify-code?email=' + encodeURIComponent(currentEmail) + '&code=' + encodeURIComponent(code))
             .then(function(response) {
                 return response.json();
             })
@@ -177,7 +166,8 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch('/api/user/reset-password', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                [csrfHeader]: csrfToken
             },
             body: JSON.stringify({
                 email: currentEmail,
