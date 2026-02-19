@@ -13,6 +13,6 @@ import lombok.NoArgsConstructor;
 public class Criteria {
     private int page = 1;
     private int size = 10;
-    private String searchType;
-    private String keyword;
+    private String searchType = "";
+    private String keyword = "";
 }

@@ -126,7 +126,14 @@
                         <form sec:authorize="isAuthenticated()"
                               th:if="${postDto.userId} == ${#authentication.principal.id}
                                 or ${#authorization.expression('hasRole(''ADMIN'')')}"
-                              th:action="@{/board/{boardId}/post/delete(boardId=${postDto.boardId}, id=${postDto.id})}"
+                              th:action="@{/board/{boardId}/post/delete(
+                                  boardId=${postDto.boardId},
+                                  id=${postDto.id},
+                                  page=${param.page != null ? param.page : 1},
+                                  size=${param.size != null ? param.size : 10},
+                                  searchType=${param.searchType != null ? param.searchType : ''},
+                                  keyword=${param.keyword != null ? param.keyword : ''}
+                              )}"
                               method="post"
                               onsubmit="return confirm('게시글을 삭제할까요?');">
                             <button type="submit" class="btn btn-danger">삭제</button>
@@ -173,6 +180,12 @@
                 <form th:action="@{/login}" method="post">
                     <input type="text" name="username" placeholder="아이디" required>
                     <input type="password" name="password" placeholder="비밀번호" required>
+
+                    <!-- 소셜 로그인 버튼 -->
+                    <button type="button" class="btn-social-login" onclick="location.href='/login'">
+                        소셜 로그인
+                    </button>
+
                     <button type="submit">로그인</button>
                 </form>
                 <div class="auth-links">

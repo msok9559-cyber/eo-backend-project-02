@@ -3,6 +3,7 @@ package com.example.community.service;
 import com.example.community.domain.post.PostDto;
 import com.example.community.domain.post.PostEntity;
 import com.example.community.domain.user.UserEntity;
+import com.example.community.domain.user.UserRole;
 import com.example.community.persistence.PostRepository;
 import com.example.community.persistence.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -23,8 +24,7 @@ public class PostServiceImpl implements PostService {
 
     private boolean isAdmin(Long userId) {
         return userRepository.findById(userId)
-                .map(user -> user.getRole())
-                .map(role -> "ROLE_ADMIN".equals(role.toString()))
+                .map(user -> user.getRole() == UserRole.ADMIN)
                 .orElse(false);
     }
 
@@ -118,6 +118,8 @@ public class PostServiceImpl implements PostService {
             }
 
             postRepository.delete(postEntity);
+            postRepository.flush();
+
             return true;
         }).orElse(false);
     }

@@ -127,16 +127,23 @@
 
         <aside id="right-sidebar">
 
+            <!-- 비로그인 시 : 로그인 폼 -->
             <div id="auth-box" sec:authorize="!isAuthenticated()">
                 <h3>로그인</h3>
                 <form th:action="@{/login}" method="post">
                     <input type="text" name="username" placeholder="아이디" required>
                     <input type="password" name="password" placeholder="비밀번호" required>
+
+                    <!-- 소셜 로그인 버튼 -->
+                    <button type="button" class="btn-social-login" onclick="location.href='/login'">
+                        소셜 로그인
+                    </button>
+
                     <button type="submit">로그인</button>
                 </form>
                 <div class="auth-links">
                     <a th:href="@{/signup}">회원가입</a>
-                    <a th:href="@{/find-password}">ID/PW 찾기</a>
+                    <a th:href="@{/findpassword}">ID/PW 찾기</a>
                 </div>
             </div>
 

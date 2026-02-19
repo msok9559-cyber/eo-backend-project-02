@@ -203,9 +203,18 @@ public class PostController {
             redirectAttributes.addFlashAttribute("result", ResultDto.of(true, "delete"));
         }
 
+        // 직접 URL 작성
         redirectAttributes.addAttribute("boardId", boardId);
-        redirectAttributes.addAttribute("page", criteria.getPage());
-        redirectAttributes.addAttribute("size", criteria.getSize());
+        if (criteria.getPage() > 0) {
+            redirectAttributes.addAttribute("page", criteria.getPage());
+        }
+        if (criteria.getSize() > 0) {
+            redirectAttributes.addAttribute("size", criteria.getSize());
+        }
+        if (criteria.getSearchType() != null && !criteria.getSearchType().isEmpty()) {
+            redirectAttributes.addAttribute("searchType", criteria.getSearchType());
+            redirectAttributes.addAttribute("keyword", criteria.getKeyword());
+        }
 
         return "redirect:/board/{boardId}/post/list";
     }
