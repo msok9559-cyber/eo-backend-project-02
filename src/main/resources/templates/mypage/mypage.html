@@ -3,10 +3,12 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>마이페이지</title>
-    <link rel="stylesheet" href="/css/list.css">
+    <link rel="stylesheet" href="/css/reset.css">
     <link rel="stylesheet" th:href="@{/css/mypage.css}">
-<!--    <script th:src="@{/js/mypage.js}"></script>-->
+    <script th:src="@{/js/mypage.js}"></script>
 </head>
 <body>
 
@@ -51,23 +53,33 @@
                 <div class="info-row nickname-row">
                     <div class="label">닉네임</div>
 
+                    <!-- 기본 표시 영역 -->
                     <div class="value" id="nicknameDisplay">
                         <span id="nicknameText" th:text="${user.nickname}"></span>
                         <button type="button" class="btn small" id="editNicknameBtn">수정</button>
                     </div>
 
-                    <!-- 닉네임 수정 -->
-                    <div class="nickname-edit hidden" id="nicknameEditBox">
+                    <!-- 수정 영역 -->
+                    <form class="nickname-edit hidden"
+                          id="nicknameEditBox"
+                          th:action="@{/mypage/nickname}"
+                          method="post">
+
+                        <!-- CSRF 토큰 -->
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
                         <input type="text"
                                class="input small"
                                id="nicknameInput"
+                               name="nickname"
                                th:placeholder="${user.nickname}">
+
                         <button type="button" class="btn small outline" id="checkNicknameBtn">중복확인</button>
                         <button type="button" class="btn small" id="saveNicknameBtn">저장</button>
                         <button type="button" class="btn small outline" id="cancelNicknameBtn">취소</button>
 
                         <p class="nickname-message"></p>
-                    </div>
+                    </form>
                 </div>
 
                 <div class="info-row">
@@ -92,16 +104,18 @@
                     <button type="button" class="btn" id="verifyPasswordBtn">확인</button>
                 </div>
 
+                <p class="password-message"></p>
+
                 <!-- 비밀번호 변경 -->
                 <div id="password-step2" class="hidden">
                     <label class="field">
                         <span>새 비밀번호</span>
-                        <input class="input" type="password" name="newPassword" required>
+                        <input class="input" type="password" name="newPassword" required disabled>
                     </label>
 
                     <label class="field">
                         <span>새 비밀번호 확인</span>
-                        <input class="input" type="password" name="newPasswordConfirm" required>
+                        <input class="input" type="password" name="newPasswordConfirm" required disabled>
                     </label>
 
                     <button class="btn" type="submit">비밀번호 변경</button>
@@ -117,53 +131,121 @@
                 <span class="count-badge" th:text="'(' + ${myPostsCount} + ')'"></span>
             </h2>
 
-            <div class="list-preview">
+            <div class="empty-state" th:if="${#lists.isEmpty(recentPosts)}">
+                작성한 게시글이 없습니다.
+            </div>
 
-                <div class="empty-state" th:if="${#lists.isEmpty(recentPosts)}">
-                    작성한 게시글이 없습니다.
-                </div>
+            <div th:unless="${#lists.isEmpty(recentPosts)}" class="list-preview">
+                <table id="mypage-table">
+                    <thead>
+                        <tr>
+                            <th>게시판</th>
+                            <th>제목</th>
+                            <th>댓글</th>
+                            <th>좋아요</th>
+                            <th>작성일</th>
+                            <th>조회</th>
+                        </tr>
+                    </thead>
 
-                <div th:each="post : ${recentPosts}" class="list-item">
-                    <a th:href="@{/board/{boardId}/post/read(boardId=${post.boardId}, id=${post.id})}"
-                       th:text="${post.title}">
-                    </a>
-                    <span class="date"
-                          th:text="${#temporals.format(post.createdAt,'yyyy-MM-dd')}">
-                    </span>
-                </div>
+                    <tbody>
+                        <tr th:each="post : ${recentPosts}">
+                            <!-- 게시판 -->
+                            <td th:text="${post.boardTitle}">자유게시판</td>
+
+                            <!-- 제목 -->
+                            <td class="title-cell">
+                                <a th:href="@{/board/{boardId}/post/read(boardId=${post.boardId}, id=${post.id})}"
+                                   th:text="${post.title}"
+                                   onclick="moveParent(this.href); return false;">
+                                    제목
+                                </a>
+                            </td>
+
+                            <td>
+                                <span th:text="${post.commentsCount}">0</span>
+                            </td>
+
+                            <!-- 좋아요 -->
+                            <td th:text="${post.likesCount}">0</td>
+
+                            <!-- 작성일 -->
+                            <td th:text="${#temporals.format(post.createdAt,'yyyy-MM-dd')}">yyyy-MM-dd</td>
+
+                            <!-- 조회수 -->
+                            <td th:text="${post.viewCount}">0</td>
+                        </tr>
+                    </tbody>
+                </table>
 
                 <div class="more-btn">
-                    <a class="btn outline" th:href="@{/mypage/posts}">
-                        전체 보기
-                    </a>
+                    <a class="btn outline" th:href="@{/mypage/posts#tab-posts}">전체 보기</a>
                 </div>
             </div>
         </section>
 
         <!-- 내 댓글 -->
         <section id="tab-comments" class="tab-panel">
-            <h2 class="section-title">내 댓글
-            <span class="count-badge" th:text="'(' + ${myCommentsCount} + ')'"></span>
+            <h2 class="section-title">
+                내 댓글
+                <span class="count-badge" th:text="'(' + ${myCommentsCount} + ')'"></span>
             </h2>
 
-            <div class="list-preview">
-                <div class="empty-state" th:if="${#lists.isEmpty(recentComments)}">
-                    작성한 댓글이 없습니다.
-                </div>
+            <div class="empty-state" th:if="${#lists.isEmpty(recentComments)}">
+                작성한 댓글이 없습니다.
+            </div>
 
-                <div th:each="comment : ${recentComments}" class="list-item">
-                    <a th:href="@{/board/{boardId}/post/read(boardId=${comment.boardId}, id=${comment.postId})}"
-                       th:text="${comment.content}">
-                    </a>
-                    <span class="date"
-                          th:text="${#temporals.format(comment.createdAt,'yyyy-MM-dd')}">
-                    </span>
-                </div>
+            <div th:unless="${#lists.isEmpty(recentComments)}" class="list-preview">
+                <table id="mypage-comment-table">
+                    <thead>
+                        <tr>
+                            <th>원글</th>
+                            <th>댓글</th>
+                            <th>내 댓글</th>
+                            <th>작성일</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr th:each="comment : ${recentComments}">
+                            <!-- 원글 -->
+                            <td class="title-cell">
+                                <a th:if="${comment.boardId != null and comment.postId != null}"
+                                   th:href="@{/board/{boardId}/post/read(boardId=${comment.boardId}, id=${comment.postId})}"
+                                   th:text="${comment.postTitle}"
+                                   onclick="moveParent(this.href); return false;">
+                                    원글 제목
+                                </a>
+
+                                <span th:unless="${comment.boardId != null and comment.postId != null}">
+                                    (원글 없음)
+                                </span>
+                            </td>
+
+                            <!-- 댓글 수 (원글의 총 댓글 수) -->
+                            <td th:text="${comment.commentsCount != null ? comment.commentsCount : 0}">0</td>
+
+                            <!-- 내 댓글 내용 -->
+                            <td class="comment-cell">
+                                <a th:if="${comment.boardId != null and comment.postId != null}"
+                                   th:href="@{/board/{boardId}/post/read(boardId=${comment.boardId}, id=${comment.postId})}"
+                                   onclick="moveParent(this.href); return false;">
+                                    <span th:text="${comment.content}">댓글 내용</span>
+                                </a>
+
+                                <span th:unless="${comment.boardId != null and comment.postId != null}">
+                                    (원글 없음)
+                                </span>
+                            </td>
+
+                            <!-- 작성일 -->
+                            <td th:text="${#temporals.format(comment.createdAt,'yyyy-MM-dd')}">yyyy-MM-dd</td>
+                        </tr>
+                    </tbody>
+                </table>
 
                 <div class="more-btn">
-                    <a class="btn outline" th:href="@{/mypage/comments}">
-                        전체 보기
-                    </a>
+                    <a class="btn outline" th:href="@{/mypage/comments#tab-comments}">전체 보기</a>
                 </div>
             </div>
         </section>

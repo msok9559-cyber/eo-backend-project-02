@@ -1,89 +1,124 @@
 <!DOCTYPE html>
-<html lang="ko"
-      xmlns:th="http://www.thymeleaf.org"
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>내 댓글</title>
-    <link rel="stylesheet" href="/css/list.css">
+    <link rel="stylesheet" href="/css/reset.css">
+    <link rel="stylesheet" th:href="@{/css/mypage.css}">
+    <script th:src="@{/js/mypage.js}"></script>
 </head>
 <body>
 
-<h1>내 댓글</h1>
+<div id="mypage-wrap" sec:authorize="isAuthenticated()">
 
-<div sec:authorize="isAuthenticated()">
+    <header>
+        <h1>내 댓글</h1>
 
-    <p>
-        <a th:href="@{/mypage}">← 마이페이지로</a>
-    </p>
+        <p>
+            <a class="btn outline small" th:href="@{/mypage#tab-comments}">← 마이페이지</a>
+        </p>
+    </header>
 
-    <table>
-        <thead>
-        <tr>
-            <th>번호</th>
-            <th>댓글</th>
-            <th>작성일</th>
-            <th>이동</th>
-        </tr>
-        </thead>
+    <main>
+        <section class="tab-panel is-active">
+            <h2 class="section-title">
+                내가 작성한 댓글
+                <span class="count-badge"
+                      th:if="${commentPage != null}"
+                      th:text="'(' + ${commentPage.totalElements} + ')'"></span>
+            </h2>
 
-        <tbody>
-        <tr th:if="${commentPage == null || #lists.isEmpty(commentPage.content)}">
-            <td colspan="4">작성한 댓글이 없습니다.</td>
-        </tr>
+            <div class="empty-state" th:if="${commentPage == null || #lists.isEmpty(commentPage.content)}">
+                작성한 댓글이 없습니다.
+            </div>
 
-        <tr th:each="c, stat : ${commentPage.content}">
-            <!-- 번호 (내림차순 계산) -->
-            <td th:text="${commentPage.totalElements - (commentPage.number * commentPage.size) - stat.index}">
-                1
-            </td>
+            <div th:unless="${commentPage == null || #lists.isEmpty(commentPage.content)}" class="list-preview">
 
-            <td th:text="${c.content}">댓글 내용</td>
+                <table id="mypage-comment-table">
+                    <thead>
+                        <tr>
+                            <th>번호</th>
+                            <th>원글</th>
+                            <th>댓글 수</th>
+                            <th>내 댓글</th>
+                            <th>작성일</th>
+                        </tr>
+                    </thead>
 
-            <td th:text="${#temporals.format(c.createdAt, 'yyyy-MM-dd HH:mm')}">
-                2026-02-13 10:00
-            </td>
+                    <tbody>
+                        <tr th:each="c, stat : ${commentPage.content}">
+                            <!-- 번호 (내림차순) -->
+                            <td th:text="${commentPage.totalElements - (commentPage.number * commentPage.size) - stat.index}">
+                                1
+                            </td>
 
-            <td>
-                <a th:if="${c.boardId != null and c.postId != null}"
-                   th:href="@{/board/{boardId}/post/read(boardId=${c.boardId}, id=${c.postId})}">
-                    원글로
-                </a>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+                            <!-- 원글 제목 -->
+                            <td class="title-cell">
+                                <a th:if="${c.boardId != null and c.postId != null}"
+                                    th:href="@{/board/{boardId}/post/read(boardId=${c.boardId}, id=${c.postId})}"
+                                    onclick="moveParent(this.href); return false;">
 
-    <!-- 페이징 -->
-    <div th:if="${commentPage != null && commentPage.totalPages > 0}">
+                                    <span th:text="${c.postTitle}">원글 제목</span>
+                                </a>
 
-        <!-- 이전 -->
-        <a th:if="${commentPage.hasPrevious()}"
-           th:href="@{/mypage/comments(page=${commentPage.number - 1}, size=${commentPage.size})}">
-            이전
-        </a>
+                                <span th:unless="${c.boardId != null and c.postId != null}">(원글 없음)</span>
+                            </td>
 
-        <!-- 페이지 번호 -->
-        <span th:each="i : ${#numbers.sequence(1, commentPage.totalPages)}">
+                            <!-- 댓글 수 -->
+                            <td class="count-cell"
+                                th:text="${c.commentsCount != null ? c.commentsCount : 0}">
+                            </td>
 
-            <span th:if="${i == commentPage.number + 1}"
-                  th:text="${i}">
-            </span>
+                            <!-- 내 댓글 -->
+                            <td class="comment-cell">
+                                <a th:if="${c.boardId != null and c.postId != null}"
+                                   class="comment-link"
+                                   th:href="@{/board/{boardId}/post/read(boardId=${c.boardId}, id=${c.postId})}"
+                                   onclick="moveParent(this.href); return false;"
+                                   th:text="${c.content}">
+                                    댓글 내용
+                                </a>
 
-            <a th:unless="${i == commentPage.number + 1}"
-               th:href="@{/mypage/comments(page=${i - 1}, size=${commentPage.size})}"
-               th:text="${i}">
-            </a>
+                                <span th:unless="${c.boardId != null and c.postId != null}">
+                                    (원글 없음)
+                                </span>
+                            </td>
 
-        </span>
+                            <!-- 작성일 -->
+                            <td th:text="${#temporals.format(c.createdAt, 'yyyy-MM-dd HH:mm')}">
+                                2026-02-13 10:00
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
 
-        <!-- 다음 -->
-        <a th:if="${commentPage.hasNext()}"
-           th:href="@{/mypage/comments(page=${commentPage.number + 1}, size=${commentPage.size})}">
-            다음
-        </a>
+                <!-- 페이징 (posts랑 동일 스타일) -->
+                <div class="pagination" th:if="${commentPage != null && commentPage.totalPages > 1}">
+                    <a th:if="${commentPage.hasPrevious()}"
+                       th:href="@{/mypage/comments(page=${commentPage.number}, size=${commentPage.size})}">
+                        이전
+                    </a>
 
-    </div>
+                    <span th:each="i : ${#numbers.sequence(1, commentPage.totalPages)}">
+                        <span th:if="${i == commentPage.number + 1}"
+                              class="is-active"
+                              th:text="${i}"></span>
+
+                        <a th:unless="${i == commentPage.number + 1}"
+                           th:href="@{/mypage/comments(page=${i}, size=${commentPage.size})}"
+                           th:text="${i}"></a>
+                    </span>
+
+                    <a th:if="${commentPage.hasNext()}"
+                       th:href="@{/mypage/comments(page=${commentPage.number + 2}, size=${commentPage.size})}">
+                        다음
+                    </a>
+                </div>
+
+            </div>
+        </section>
+    </main>
 
 </div>
 

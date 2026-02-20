@@ -229,8 +229,8 @@ function openMessagePopup() {
 
 // 마이페이지 팝업
 function openMypage() {
-    const width = 700;
-    const height = 750;
+    const width = 900;
+    const height = 900;
 
     // 화면 중앙 배치
     const left = Math.max(0, (window.screen.width - width) / 2);

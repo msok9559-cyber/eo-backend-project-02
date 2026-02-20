@@ -1,8 +1,11 @@
 package com.example.community.service;
 
+import com.example.community.domain.comment.CommentDto;
 import com.example.community.domain.post.PostDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import java.util.List;
 
 public interface MypageService {
 
@@ -17,4 +20,8 @@ public interface MypageService {
      * - commentService 결과를 그대로 반환
      */
     Page<?> getMyComments(Long userId, Pageable pageable);
+
+    List<PostDto> getRecentPosts(Long userId, int limit);
+
+    List<CommentDto> getRecentComments(Long userId, int limit);
 }

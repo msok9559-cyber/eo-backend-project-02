@@ -17,6 +17,7 @@ public class CommentDto {
     private Long id;
     private Long userId;
     private Long postId;
+    private Long boardId;
 
     private String postTitle;
 
@@ -39,6 +40,8 @@ public class CommentDto {
                 .id(commentEntity.getId())
                 .userId(commentEntity.getUserId())
                 .postId(commentEntity.getPostEntity().getId())
+                .boardId(commentEntity.getPostEntity().getBoardId())
+                .commentsCount(commentEntity.getPostEntity().getCommentsCount())
                 .content(commentEntity.getContent())
                 .createdAt(commentEntity.getCreatedAt())
                 .updatedAt(commentEntity.getUpdatedAt())

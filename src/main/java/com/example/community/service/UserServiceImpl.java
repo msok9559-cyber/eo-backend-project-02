@@ -219,4 +219,13 @@ public class UserServiceImpl implements UserService {
         log.info("비밀번호 재설정 완료: email={}", email);
     }
 
+    /**
+     * 현재 비밀번호 체크
+     */
+    @Override
+    public boolean verifyCurrentPassword(Long userId, String currentPassword) {
+        return userRepository.findById(userId)
+                .map(user -> passwordEncoder.matches(currentPassword, user.getPassword()))
+                .orElse(false);
+    }
 }

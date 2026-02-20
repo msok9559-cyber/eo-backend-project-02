@@ -1,104 +1,107 @@
 <!DOCTYPE html>
-<html lang="ko"
-      xmlns:th="http://www.thymeleaf.org"
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>내 게시글</title>
-    <link rel="stylesheet" href="/css/list.css">
+    <link rel="stylesheet" href="/css/reset.css">
+    <link rel="stylesheet" th:href="@{/css/mypage.css}">
+    <script th:src="@{/js/mypage.js}"></script>
 </head>
 <body>
 
-<h1>내 게시글</h1>
+<div id="mypage-wrap" sec:authorize="isAuthenticated()">
 
-<div sec:authorize="isAuthenticated()">
+    <header>
+        <h1>내 게시글</h1>
+        <p>
+            <a class="btn outline small" th:href="@{/mypage#tab-posts}">← 마이페이지</a>
+        </p>
+    </header>
 
-    <p>
-        <a th:href="@{/mypage}">← 마이페이지</a>
-    </p>
+    <main>
+        <section class="tab-panel is-active">
+            <h2 class="section-title">
+                내가 작성한 게시글
+                <span class="count-badge"
+                      th:if="${postPage != null}"
+                      th:text="'(' + ${postPage.totalElements} + ')'"></span>
+            </h2>
 
-    <table>
-        <thead>
-        <tr>
-            <th>번호</th>
-            <th>게시판</th>
-            <th>제목</th>
-            <th>좋아요</th>
-            <th>작성일</th>
-            <th>조회</th>
-        </tr>
-        </thead>
+            <div class="empty-state" th:if="${postPage == null || #lists.isEmpty(postPage.content)}">
+                작성한 게시글이 없습니다.
+            </div>
 
-        <tbody>
-        <tr th:if="${postPage == null || #lists.isEmpty(postPage.content)}">
-            <td colspan="6">작성한 게시글이 없습니다.</td>
-        </tr>
+            <div th:unless="${postPage == null || #lists.isEmpty(postPage.content)}" class="list-preview">
+                <table id="mypage-table">
+                    <thead>
+                        <tr>
+                            <th>번호</th>
+                            <th>게시판</th>
+                            <th>제목</th>
+                            <th>댓글 수</th>
+                            <th>좋아요</th>
+                            <th>작성일</th>
+                            <th>조회</th>
+                        </tr>
+                    </thead>
 
-        <tr th:each="post, stat : ${postPage.content}">
-            <!-- 번호 -->
-            <td th:text="${postPage.totalElements - (postPage.number * postPage.size) - stat.index}">
-                1
-            </td>
+                    <tbody>
+                        <tr th:each="post, stat : ${postPage.content}">
+                            <!-- 번호 -->
+                            <td th:text="${postPage.totalElements - (postPage.number * postPage.size) - stat.index}">
+                                1
+                            </td>
 
-            <!-- 게시판 이름 -->
-            <td th:text="${post.boardTitle}">자유게시판</td>
+                            <!-- 게시판 -->
+                            <td th:text="${post.boardTitle}">자유게시판</td>
 
-            <!-- 제목 + 댓글수 -->
-            <td>
-                <a th:href="@{/board/{boardId}/post/read(boardId=${post.boardId}, id=${post.id})}">
-                    <span th:text="${post.title}">제목</span>
-                </a>
-                <span th:if="${post.commentsCount > 0}"
-                      th:text="' (' + ${post.commentsCount} + ')'">
-                </span>
-            </td>
+                            <!-- 제목 -->
+                            <td class="title-cell">
+                                <a th:href="@{/board/{boardId}/post/read(boardId=${post.boardId}, id=${post.id})}"
+                                   onclick="moveParent(this.href); return false;">
+                                    <span th:text="${post.title}">제목</span>
+                                </a>
+                            </td>
 
-            <!-- 좋아요 -->
-            <td th:text="${post.likesCount}">0</td>
+                            <!-- 댓글 수 -->
+                            <td th:text="${post.commentsCount != null ? post.commentsCount : 0}">0</td>
 
-            <!-- 작성일 -->
-            <td th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd')}">
-                yyyy-MM-dd
-            </td>
+                            <!-- 좋아요 -->
+                            <td th:text="${post.likesCount}">0</td>
 
-            <!-- 조회수 -->
-            <td th:text="${post.viewCount}">0</td>
-        </tr>
-        </tbody>
-    </table>
+                            <!-- 작성일 -->
+                            <td th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd')}">yyyy-MM-dd</td>
 
-    <!-- 페이징 -->
-    <div style="margin-top:16px;"
-         th:if="${postPage != null && postPage.totalPages > 0}">
+                            <!-- 조회 -->
+                            <td th:text="${post.viewCount}">0</td>
+                        </tr>
+                    </tbody>
+                </table>
 
-        <!-- 이전 -->
-        <a th:if="${postPage.hasPrevious()}"
-           th:href="@{/mypage/posts(page=${postPage.number - 1}, size=${postPage.size})}">
-            이전
-        </a>
+                <!-- 페이징 -->
+                <div class="pagination" th:if="${postPage != null && postPage.totalPages > 1}">
+                    <a th:if="${postPage.hasPrevious()}"
+                       th:href="@{/mypage/posts(page=${postPage.number}, size=${postPage.size})}">
+                        이전
+                    </a>
 
-        <!-- 페이지 번호 -->
-        <span th:each="i : ${#numbers.sequence(1, postPage.totalPages)}"
-              style="margin:0 4px;">
+                    <span th:each="i : ${#numbers.sequence(1, postPage.totalPages)}">
+                        <span th:if="${i == postPage.number + 1}" class="is-active" th:text="${i}"></span>
 
-            <span th:if="${i == postPage.number + 1}"
-                  th:text="${i}">
-            </span>
+                        <a th:unless="${i == postPage.number + 1}"
+                           th:href="@{/mypage/posts(page=${i}, size=${postPage.size})}"
+                           th:text="${i}"></a>
+                    </span>
 
-            <a th:unless="${i == postPage.number + 1}"
-               th:href="@{/mypage/posts(page=${i - 1}, size=${postPage.size})}"
-               th:text="${i}">
-            </a>
-
-        </span>
-
-        <!-- 다음 -->
-        <a th:if="${postPage.hasNext()}"
-           th:href="@{/mypage/posts(page=${postPage.number + 1}, size=${postPage.size})}">
-            다음
-        </a>
-
-    </div>
+                    <a th:if="${postPage.hasNext()}"
+                       th:href="@{/mypage/posts(page=${postPage.number + 2}, size=${postPage.size})}">
+                        다음
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
 
 </div>
 

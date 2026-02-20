@@ -55,4 +55,8 @@ public interface UserService {
      */
     void resetPassword(String email, String newPassword);
 
+    /*
+    * 현재 비밀번호 체크
+     */
+    boolean verifyCurrentPassword(Long userId, String currentPassword);
 }

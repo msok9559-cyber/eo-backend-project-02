@@ -1,5 +1,6 @@
 package com.example.community.controller;
 
+import com.example.community.domain.post.PostDto;
 import com.example.community.domain.user.UserDto;
 import com.example.community.security.CustomUserDetails;
 import com.example.community.service.CommentService;
@@ -13,7 +14,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,6 +26,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -60,11 +66,20 @@ public class MypageController {
 
         Long userId = user.getId();
 
+        // 확인용
+        List<PostDto> recent = mypageService.getRecentPosts(userId, 10);
+
+        log.info("recentPosts sample boardId={}, boardTitle={}",
+                recent.isEmpty() ? null : recent.get(0).getBoardId(),
+                recent.isEmpty() ? null : recent.get(0).getBoardTitle()
+        );
+        model.addAttribute("recentPosts", recent);
+
         // 내가 작성한 게시글 최신 10개
-        model.addAttribute("recentPosts", postService.findTop10ByUserId(userId));
+        model.addAttribute("recentPosts", mypageService.getRecentPosts(userId, 10));
 
         // 내가 작성한 댓글 최신 10개
-        model.addAttribute("recentComments", commentService.findTop10ByUserId(userId));
+        model.addAttribute("recentComments", mypageService.getRecentComments(userId, 10));
 
         // 내가 작성한 게시글 개수 표시
         model.addAttribute("myPostsCount",
@@ -89,7 +104,6 @@ public class MypageController {
                                  @RequestParam String nickname,
                                  RedirectAttributes redirectAttributes) {
 
-        // 방어 코드(보안상 보통 여기까지 안 옴)
         if (userDetails == null) {
             redirectAttributes.addFlashAttribute("error", "로그인이 필요합니다.");
             return "redirect:/login";
@@ -99,7 +113,12 @@ public class MypageController {
         log.info("닉네임 변경 요청: userId={}, newNickname={}", userId, nickname);
 
         try {
+            // 1) DB 업데이트 (여기서 중복이면 예외)
             userService.updateNickname(userId, nickname);
+
+            // 2) DB 업데이트 성공했을 때만 principal 갱신
+            refreshPrincipalNickname(nickname);
+
             log.info("닉네임 변경 성공: userId={}", userId);
             redirectAttributes.addFlashAttribute("message", "닉네임이 변경되었습니다.");
         } catch (IllegalArgumentException e) {
@@ -107,7 +126,85 @@ public class MypageController {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
 
-        return "redirect:/mypage";
+        return "redirect:/mypage#tab-profile";
+    }
+
+    private void refreshPrincipalNickname(String newNickname) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null) return;
+
+        Object principal = authentication.getPrincipal();
+
+        if (principal instanceof CustomUserDetails customUserDetails) {
+
+            customUserDetails.getUser().updateNickname(newNickname);
+
+            Authentication newAuth = new UsernamePasswordAuthenticationToken(
+                    customUserDetails,
+                    authentication.getCredentials(),
+                    authentication.getAuthorities()
+            );
+
+            SecurityContextHolder.getContext().setAuthentication(newAuth);
+        }
+    }
+
+    /**
+     * 닉네임 중복체크
+     */
+    @GetMapping("/nickname/check")
+    @org.springframework.web.bind.annotation.ResponseBody
+    public java.util.Map<String, Object> checkNickname(
+            @RequestParam String nickname,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        // 로그인 방어(보통은 여기 안 옴)
+        if (userDetails == null) {
+            return java.util.Map.of("available", false, "message", "로그인이 필요합니다.");
+        }
+
+        // 본인 닉네임이면 사용 가능 처리(UX)
+        String currentNick = userDetails.getUser().getNickname();
+        if (nickname != null && nickname.equals(currentNick)) {
+            return java.util.Map.of("available", true, "message", "현재 닉네임입니다.");
+        }
+
+        boolean available = !userService.existsByNickname(nickname);
+
+        return java.util.Map.of(
+                "available", available,
+                "message", available ? "사용 가능합니다." : "이미 사용 중입니다."
+        );
+    }
+
+    /**
+     * 현재 비밀번호 체크
+     */
+    @PostMapping("/password/verify")
+    @org.springframework.web.bind.annotation.ResponseBody
+    public java.util.Map<String, Object> verifyPassword(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @org.springframework.web.bind.annotation.RequestBody java.util.Map<String, String> body
+    ) {
+        if (userDetails == null) {
+            return java.util.Map.of("match", false, "message", "로그인이 필요합니다.");
+        }
+
+        String currentPassword = body.getOrDefault("currentPassword", "");
+        Long userId = userDetails.getUser().getId();
+
+        try {
+            boolean match = userService.verifyCurrentPassword(userId, currentPassword);
+
+            return java.util.Map.of(
+                    "match", match,
+                    "message", match ? "현재 비밀번호가 일치합니다." : "현재 비밀번호가 일치하지 않습니다."
+            );
+        } catch (Exception e) {
+            return java.util.Map.of("match", false, "message", "비밀번호 확인 중 오류가 발생했습니다.");
+        }
     }
 
     /**
@@ -119,14 +216,20 @@ public class MypageController {
     @PostMapping("/password")
     public String changePassword(@AuthenticationPrincipal CustomUserDetails userDetails,
                                  @RequestParam String currentPassword,
-                                 @RequestParam String newPassword,
-                                 @RequestParam String newPasswordConfirm,
+                                 @RequestParam(required = false) String newPassword,
+                                 @RequestParam(required = false) String newPasswordConfirm,
                                  RedirectAttributes redirectAttributes) {
 
 
         if (userDetails == null) {
             redirectAttributes.addFlashAttribute("error", "로그인이 필요합니다.");
             return "redirect:/login";
+        }
+
+        if (newPassword == null || newPassword.isBlank()
+                || newPasswordConfirm == null || newPasswordConfirm.isBlank()) {
+            redirectAttributes.addFlashAttribute("error", "새 비밀번호를 입력해주세요.");
+            return "redirect:/mypage#tab-password";
         }
 
         Long userId = userDetails.getUser().getId();

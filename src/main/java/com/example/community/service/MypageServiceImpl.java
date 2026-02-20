@@ -1,6 +1,7 @@
 package com.example.community.service;
 
 import com.example.community.domain.board.BoardDto;
+import com.example.community.domain.comment.CommentDto;
 import com.example.community.domain.post.PostDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +49,45 @@ public class MypageServiceImpl implements MypageService {
         );
 
         return postPage;
+    }
+
+    @Override
+    public List<PostDto> getRecentPosts(Long userId, int limit) {
+        log.info("마이페이지-최근 게시글 조회: userId={}, limit={}", userId, limit);
+
+        List<PostDto> recentPosts = postService.findTop10ByUserId(userId);
+
+        if (recentPosts == null || recentPosts.isEmpty()) {
+            return recentPosts;
+        }
+
+        List<Long> boardIds = recentPosts.stream()
+                .map(PostDto::getBoardId)
+                .distinct()
+                .toList();
+
+        Map<Long, String> boardTitleMap = boardService.getByIds(boardIds).stream()
+                .collect(Collectors.toMap(BoardDto::getId, BoardDto::getTitle));
+
+        recentPosts.forEach(post ->
+                post.setBoardTitle(boardTitleMap.getOrDefault(post.getBoardId(), "알 수 없음"))
+        );
+
+        return recentPosts;
+    }
+
+    @Override
+    public List<CommentDto> getRecentComments(Long userId, int limit) {
+        log.info("마이페이지-최근 댓글 조회: userId={}, limit={}", userId, limit);
+
+        List<CommentDto> recentComments = commentService.findTop10ByUserId(userId);
+
+        if (recentComments == null || recentComments.isEmpty()) {
+            return recentComments;
+        }
+
+
+        return recentComments;
     }
 
     @Override

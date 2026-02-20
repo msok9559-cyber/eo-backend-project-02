@@ -160,6 +160,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     // 내댓글 목록 조회
+    @Transactional(readOnly = true)
     @Override
     public Page<CommentDto> getMyComments(Long userId, Pageable pageable) {
         log.info("내 댓글 조회: userId={}, page={}, size={}",
@@ -170,6 +171,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     // 마이페이지 댓글 최신 10개
+    @Transactional(readOnly = true)
     @Override
     public List<CommentDto> findTop10ByUserId(Long userId) {
 

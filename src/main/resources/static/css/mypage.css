@@ -12,22 +12,27 @@
 
 /* 헤더 */
 #mypage-wrap > header {
-    padding-left: 20px;
+    padding: 15px 20px;
     background: rgba(0, 0, 0, 0.18);
     border-bottom: 1px solid rgba(255 ,255 ,255 ,0.10);
     font-size: 20px;
+    gap: 5px;
+    line-height: 1.2;
 }
 
-#mypage-wrap > header > h1{
+#mypage-wrap > header > h1 {
     margin-top: 5px;
-    font-size: 15px;
+    margin-bottom: 15px;
+    font-size: 20px;
     color: rgba(232, 238, 252, 0.78);
 }
 
 #mypage-wrap > header > p,
 #mypage-wrap > header > p > span {
     font-weight: 800;
+    line-height: 1.6;
     color: rgba(232, 238, 252, 0.95);
+    font-size: 15px;
 }
 
 /* 상단 탭 바 */
@@ -109,7 +114,7 @@
 
 /* 입력란 */
 .input {
-    width: 100%;
+    width: 80%;
     padding: 10px 15px;
     border-radius: 15px;
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -145,6 +150,7 @@
 
 /* 버튼 */
 .btn {
+    margin-top: 10px;
     padding: 10px 15px;
     border-radius: 15px;
     border: 1px solid rgba(91, 140, 255, 0.55);
@@ -168,6 +174,7 @@
 }
 
 .btn.outline {
+    text-decoration: none;
     background: transparent;
     border-color: rgba(255, 255, 255, 0.18);
 }
@@ -191,6 +198,10 @@
 }
 .nickname-message.success { color: rgba(46, 204, 113, 0.95); }
 .nickname-message.error { color: rgba(255, 77, 79, 0.95); }
+.nickname-row { display: flex; align-items: center; gap: 12px; }
+.nickname-row .label { width: 80px; }
+.nickname-row .value { display: flex; align-items: center; gap: 8px; }
+.nickname-edit { display: flex; align-items: center; gap: 8px; }
 
 /* 알림 */
 .alert {
@@ -230,6 +241,36 @@
     margin-left: auto;
     white-space: nowrap;
 }
+
+.field{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.field > span{
+    white-space: nowrap;
+}
+
+#password-step2{
+    margin: 10px 15px 0 15px;
+    padding: 15px;
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.password-message{
+    margin: 10px 15px 0 15px;
+    font-size: 14px;
+}
+.password-message.success{ color: rgba(46, 204, 113, 0.95); }
+.password-message.error{ color: rgba(255, 77, 79, 0.95); }
 
 
 /* 게시글/댓글 리스트 미리보기 */
@@ -286,6 +327,13 @@
     display: inline-block;
 }
 
+.comment-badge {
+    margin-left: 6px;
+    font-size: 0.85rem;
+    color: #666;
+    font-weight: 500;
+}
+
 .comment-item .comment-main {
     display: flex;
     align-items: center;
@@ -295,6 +343,168 @@
 .comment-on {
     font-size: 15px;
     color: white;
+}
+
+#mypage-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+#mypage-table > thead > tr > th {
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+#mypage-table > tbody > tr > td {
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: center;
+    font-size: 15px;
+}
+
+#mypage-table > tbody > tr > td.title-cell {
+    text-align: left;
+    max-width: 360px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#mypage-table > tbody > tr > td.title-cell > a {
+    display: inline-block;
+    max-width: 100%;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#mypage-table > tbody > tr > td > a {
+    color: white;
+    text-decoration: none;
+}
+
+#mypage-table > tbody > tr > td.title-cell > a:hover {
+    color: skyblue;
+}
+
+
+#mypage-table > tbody > tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+#tab-posts > .list-preview {
+    padding: 15px;
+}
+
+/* 댓글 테이블 */
+#mypage-comment-table{
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed; /* ★ 필수 */
+}
+
+#mypage-comment-table > thead > tr > th,
+#mypage-comment-table > tbody > tr > td{
+    text-align: center;
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 15px;
+}
+
+#mypage-comment-table > thead > tr > th{
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+    text-align: center;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+#mypage-comment-table th:nth-child(1),
+#mypage-comment-table td:nth-child(1){
+    width: 70px;
+}
+
+#mypage-comment-table th:nth-child(2),
+#mypage-comment-table td:nth-child(2){
+    width: 30%;
+}
+
+#mypage-comment-table th:nth-child(3),
+#mypage-comment-table td:nth-child(3){
+    width: 90px;
+}
+
+#mypage-comment-table th:nth-child(4),
+#mypage-comment-table td:nth-child(4){
+    width: 40%;
+}
+
+#mypage-comment-table th:nth-child(5),
+#mypage-comment-table td:nth-child(5){
+    width: 160px;
+}
+
+#mypage-comment-table td.title-cell{
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#mypage-comment-table > tbody > tr > td > a{
+    display: block;
+    max-width: 100%;
+    color: white;
+    text-decoration: none;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#mypage-comment-table > tbody > tr > td > a:hover {
+    color: skyblue;
+}
+
+#mypage-comment-table td.title-cell > a:hover{
+    color: skyblue;
+}
+
+#mypage-comment-table td.comment-cell{
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#mypage-comment-table td.count-cell{
+    text-align: center;
+    white-space: nowrap;
+}
+
+#mypage-comment-table > tbody > tr:hover{
+    background: rgba(255, 255, 255, 0.03);
+}
+
+#mypage-comment-table td.comment-cell .comment-link{
+    display: block;
+    max-width: 100%;
+    color: white;
+    text-decoration: none;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#mypage-comment-table td.comment-cell .comment-link:hover{
+    text-decoration: underline;
+    cursor: pointer;
 }
 
 /* 탈퇴 */
@@ -310,10 +520,23 @@
     margin: 0 0 10px 0;
     font-weight: 800;
 }
+
+#danger-card > p {
+    padding-bottom: 5px;
+    margin-left: 5px;
+    font-size: 20px;
+    line-height: 1.6;
+    font-weight: 600;
+    color: crimson;
+}
+
+
 #danger-card > ul {
     margin: 0 0 15px 20px;
     color: white;
+    line-height: 1.6;
 }
+
 #danger-card > div {
     margin-top: 12px;
     display: flex;
@@ -351,6 +574,7 @@
     padding: 15px;
 }
 #modal > h3 {
+    color: crimson;
     margin: 0 0 10px 0;
     font-size: 15px;
 }
@@ -366,4 +590,46 @@
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+}
+
+.hidden { display: none !important; }
+
+/* 페이징 */
+.pagination {
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    font-size: 15px;
+}
+
+.pagination > a {
+    color: rgba(232, 238, 252, 0.7);
+    text-decoration: none;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: 0.2s;
+}
+
+.pagination > a:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.pagination > span {
+    display: flex;
+}
+
+.pagination > span > a {
+    color: rgba(232, 238, 252, 0.7);
+    text-decoration: none;
+    padding: 4px 6px;
+    border-radius: 6px;
+}
+
+.pagination > span > .is-active {
+    color: white;
+    font-weight: 700;
+    border-bottom: 2px solid rgba(91,140,255,0.8);
+    padding: 4px 6px;
 }
