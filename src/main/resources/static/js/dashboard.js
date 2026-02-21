@@ -161,8 +161,10 @@ function renderUsersTable(users) {
                 <td>${createBadge(statusText, statusType)}</td>
                 <td>${formatDate(user.createdAt)}</td>
                 <td>
+                    <div class="btn-group">
                     ${createButton(roleButtonText, 'btn-primary', `changeUserRole(${user.id}, '${user.role}')`)}
                     ${createButton(actionButtonText, user.active ? 'btn-danger' : 'btn-success', `${actionFunction}(${user.id})`)}
+                    </div>
                 </td>
             </tr>
         `;

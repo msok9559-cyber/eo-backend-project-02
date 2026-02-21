@@ -353,3 +353,12 @@ button.btn-danger:hover {
     padding: 60px 20px;
     color: #999;
 }
+
+.btn-group {
+    display: flex;
+    gap: 5px;
+}
+
+#logout-btn-form {
+    margin: 0;
+}
