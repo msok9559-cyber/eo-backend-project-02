@@ -430,7 +430,7 @@ body {
     font-size: 14px;
 }
 
-#auth-box > form > button {
+#auth-box > form > button  {
     width: 100%;
     padding: 10px;
     background-color: #667eea;
@@ -463,27 +463,27 @@ body {
     color: #333;
 }
 
-/* 소셜 로그인 버튼 스타일 */
+/* 소셜 로그인 버튼 스타일  */
 .btn-social-login {
     width: 100%;
     padding: 10px;
     margin: 10px 0;
-    background-color: #f5f5f5;
-    color: #333;
-    border: 1px solid #ddd;
+    background-color: #32CD32;
+    color: white;
+    border: 1px solid #32CD32;
     border-radius: 4px;
     cursor: pointer;
-    font-weight: 500;
+    font-weight: 600;
     transition: all 0.3s ease;
 }
 
 .btn-social-login:hover {
-    background-color: #e8e8e8;
-    border-color: #bbb;
+    background-color: #9ACD32;
+    border-color: #9ACD32;
 }
 
 .btn-social-login:active {
-    background-color: #ddd;
+    background-color: #32CD32;
 }
 
 /* 로그인 후 사용자 정보 */
